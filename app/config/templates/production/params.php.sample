@@ -1,0 +1,6 @@
+<?php
+$parent = CANIS_APP_PATH . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . basename(__FILE__);
+$params = include $parent;
+$params['siteName'] = '{{ app.name }}';
+$params['salt'] = '{{ salt }}';
+return $params;

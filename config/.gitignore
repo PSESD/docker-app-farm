@@ -1,0 +1,5 @@
+*
+!.gitignore
+!bare.env.php
+!bare.console.php
+!bare.web.php

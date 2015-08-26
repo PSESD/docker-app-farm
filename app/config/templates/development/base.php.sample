@@ -1,0 +1,21 @@
+<?php
+$config = [];
+$config['id'] = CANIS_APP_ID;
+$config['name'] = CANIS_APP_NAME;
+$config['components'] = [];
+$cacheFile = __DIR__ . DIRECTORY_SEPARATOR . 'cache.php';
+if (file_exists($cacheFile)) {
+	$config['components']['cache'] = include $cacheFile;
+}
+
+$idpFile = __DIR__ . DIRECTORY_SEPARATOR . 'identityProviders.php';
+if (file_exists($idpFile)) {
+	$config['components']['identityProviders'] = include $idpFile;
+}
+
+$redisFile = __DIR__ . DIRECTORY_SEPARATOR . 'redis.php';
+if (file_exists($redisFile)) {
+	$config['components']['redis'] = include $redisFile;
+}
+
+return $config;

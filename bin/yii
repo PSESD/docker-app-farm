@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+// fcgi doesn't have STDIN and STDOUT defined by default
+defined('STDIN') or define('STDIN', fopen('php://stdin', 'r'));
+defined('STDOUT') or define('STDOUT', fopen('php://stdout', 'w'));
+
+require(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
+
+if (!class_exists('canis\base\ApplicationEngine')) {
+	throw new \Exception('Canis core libraries have not been installed. Have you ran `composer install`?');
+}
+
+canis\base\ApplicationEngine::runConsoleApplication(dirname(__DIR__));

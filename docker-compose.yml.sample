@@ -1,0 +1,14 @@
+# The nginx server for serving static files directly, cached contents via the memcached server and php files via the php-fpm server
+web:
+  image: jacobom/lemp:latest
+  volumes:
+    - ./:/var/www
+  ports:
+    - "80"
+  expose:
+    - "80"
+  environment:
+    VIRTUAL_HOST: ~^wdf\..*
+    NGINX_ERROR_LOG_LEVEL: "notice"
+    DB_NAME: "wdf"
+    GITHUB_API_TOKEN: ""
