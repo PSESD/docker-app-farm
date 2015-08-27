@@ -22,6 +22,29 @@ use Yii;
  */
 class Instance extends \canis\db\ActiveRecordRegistry
 {
+    protected $_dataObject;
+
+    public function init()
+    {
+        parent::init();
+        $this->on(self::EVENT_BEFORE_VALIDATE, [$this, 'serializeData']);
+    }
+
+     /**
+     * [[@doctodo method_description:serializeAction]].
+     */
+    public function serializeData()
+    {
+        if (isset($this->_dataObject)) {
+            try {
+                $this->data = serialize($this->_dataObject);
+            } catch (\Exception $e) {
+                \d($this->_dataObject);
+                exit;
+            }
+        }
+    }
+
     /**
      * @inheritdoc
      */
@@ -29,6 +52,15 @@ class Instance extends \canis\db\ActiveRecordRegistry
     {
         return 'instance';
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public static function isAccessControlled()
+    {
+        return false;
+    }
+
 
     /**
      * @inheritdoc
@@ -74,10 +106,27 @@ class Instance extends \canis\db\ActiveRecordRegistry
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Set action object.
+     *
+     * @param [[@doctodo param_type:ao]] $ao [[@doctodo param_description:ao]]
      */
-    public function getId0()
+    public function setDataObject($do)
     {
-        return $this->hasOne(Registry::className(), ['id' => 'id']);
+        $this->_dataObject = $do;
+    }
+
+    /**
+     * Get action object.
+     *
+     * @return [[@doctodo return_type:getActionObject]] [[@doctodo return_description:getActionObject]]
+     */
+    public function getDataObject()
+    {
+        if (!isset($this->_dataObject) && !empty($this->data)) {
+            $this->_dataObject = unserialize($this->data);
+            $this->_dataObject->model = $this;
+        }
+
+        return $this->_dataObject;
     }
 }

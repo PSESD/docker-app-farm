@@ -24,6 +24,14 @@ class Application extends \canis\db\ActiveRecordRegistry
     {
         return 'application';
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public static function isAccessControlled()
+    {
+        return false;
+    }
 
     /**
      * @inheritdoc

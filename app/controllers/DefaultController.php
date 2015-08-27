@@ -9,13 +9,11 @@
 namespace canis\appFarm\controllers;
 
 use Yii;
-use yii\web\NotFoundHttpException;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use canis\appFarm\models\Instance;
-use canis\appFarm\components\applications\ApplicationInstance;
 
-class InstanceController extends \canis\appFarm\components\web\Controller
+class DefaultController extends \canis\appFarm\components\web\Controller
 {
 	/**
      * @inheritdoc
@@ -71,41 +69,12 @@ class InstanceController extends \canis\appFarm\components\web\Controller
         return true;
     }
 
-	public function actionIndex()
+	/**
+     * The landing page for the application.
+     */
+    public function actionIndex()
     {
         Yii::$app->response->view = 'index';
-    }
-
-    public function actionCreate()
-    {
-        if (empty($_GET['application_id']) || !($application = Yii::$app->collectors['applications']->getByPk($_GET['application_id']))) {
-            throw new NotFoundHttpException("Application not found");
-        }
-        $this->params['application'] = $application;
-        $this->params['model'] = new Instance;
-        $this->params['model']->application_id = $application->applicationObject->primaryKey;
-        $this->params['applicationInstance'] = $this->params['model']->dataObject = new ApplicationInstance;
-
-        if (!empty($_POST)) {
-            $data = false;
-            if (isset($_POST['Instance']['data'])) {
-                $data = $_POST['Instance']['data'];
-                unset($_POST['Instance']['data']);
-            }
-            $this->params['model']->load($_POST);
-            $this->params['applicationInstance']->attributes = $data;
-            $this->params['model']->active = 1;
-            if ($this->params['model']->save()) {
-                Yii::$app->response->success = 'Instance of \'' . $application->name .'\' created!';
-                Yii::$app->response->refresh = true;
-                return;
-            }
-        }
-        Yii::$app->response->view = 'create';
-        Yii::$app->response->task = 'dialog';
-        Yii::$app->response->labels['submit'] = 'Create';
-        Yii::$app->response->taskOptions = ['title' => 'Create Instance of ' . $application->name, 'width' => '800px'];
-
     }
 }
 ?>
