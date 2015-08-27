@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\components\base;
+namespace canis\appFarm\components\base;
 
 /**
  * ClassManager Class name helper for the application.
@@ -21,25 +21,25 @@ class ClassManager extends \canis\base\ClassManager
     public function baseClasses()
     {
         return [
-            'Registry' => 'canis\wdf\models\Registry',
-            'Relation' => 'canis\wdf\models\Relation',
+            'Registry' => 'canis\appFarm\models\Registry',
+            'Relation' => 'canis\appFarm\models\Relation',
 
-            'Aca' => 'canis\wdf\models\Aca',
-            'Acl' => 'canis\wdf\models\Acl',
-            'AclRole' => 'canis\wdf\models\AclRole',
-            'Role' => 'canis\wdf\models\Role',
+            'Aca' => 'canis\appFarm\models\Aca',
+            'Acl' => 'canis\appFarm\models\Acl',
+            'AclRole' => 'canis\appFarm\models\AclRole',
+            'Role' => 'canis\appFarm\models\Role',
 
-            'User' => 'canis\wdf\models\User',
-            'Group' => 'canis\wdf\models\Group',
-            'IdentityProvider' => 'canis\wdf\models\IdentityProvider',
-            'Identity' => 'canis\wdf\models\Identity',
+            'User' => 'canis\appFarm\models\User',
+            'Group' => 'canis\appFarm\models\Group',
+            'IdentityProvider' => 'canis\appFarm\models\IdentityProvider',
+            'Identity' => 'canis\appFarm\models\Identity',
 
-            'Storage' => 'canis\wdf\models\Storage',
-            'StorageEngine' => 'canis\wdf\models\StorageEngine',
+            'Storage' => 'canis\appFarm\models\Storage',
+            'StorageEngine' => 'canis\appFarm\models\StorageEngine',
 
-            'Audit' => 'canis\wdf\models\Audit',
+            'Audit' => 'canis\appFarm\models\Audit',
 
-            'SearchTermResult' => 'canis\wdf\components\db\behaviors\SearchTermResult',
+            'SearchTermResult' => 'canis\appFarm\components\db\behaviors\SearchTermResult',
         ];
     }
 }

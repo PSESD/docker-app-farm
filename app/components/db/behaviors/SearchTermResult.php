@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\components\db\behaviors;
+namespace canis\appFarm\components\db\behaviors;
 
 class SearchTermResult extends \canis\db\behaviors\SearchTermResult
 {

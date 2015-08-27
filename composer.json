@@ -1,5 +1,5 @@
 {
-    "name": "canis/wdf",
+    "name": "canis/appFarm",
     "description": "WordPress Docker Farm",
     "keywords": [
         "wordpress",
@@ -41,7 +41,7 @@
     },
     "autoload": {
         "psr-4": {
-            "canis\\wdf\\": "app"
+            "canis\\appFarm\\": "app"
         }
     },
     "extra": {

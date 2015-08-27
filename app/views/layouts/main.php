@@ -4,7 +4,7 @@ use yii\bootstrap\NavBar;
 use yii\bootstrap\Nav;
 use yii\widgets\Breadcrumbs;
 
-$this->beginContent('@canis/wdf/views/layouts/frame.php');
+$this->beginContent('@canis/appFarm/views/layouts/frame.php');
 NavBar::begin([
     'brandLabel' => Yii::$app->params['siteName'],
     'brandUrl' => ['default/index'],

@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\console\controllers;
+namespace canis\appFarm\console\controllers;
 
 use Yii;
 

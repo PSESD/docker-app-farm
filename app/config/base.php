@@ -6,10 +6,10 @@ use yii\caching\DummyCache;
 use yii\caching\FileCache;
 use yii\redis\Cache as RedisCache;
 use yii\i18n\Formatter as I18nFormatter;
-use canis\wdf\components\base\Bootstrap;
-use canis\wdf\components\base\ClassManager;
-use canis\wdf\components\web\View;
-use canis\wdf\components\web\Response;
+use canis\appFarm\components\base\Bootstrap;
+use canis\appFarm\components\base\ClassManager;
+use canis\appFarm\components\web\View;
+use canis\appFarm\components\web\Response;
 
 defined('CANIS_ROLE_LEVEL_OWNER') 		|| define('CANIS_ROLE_LEVEL_OWNER', 600); // owner levels: 501-600
 defined('CANIS_ROLE_LEVEL_MANAGER')		|| define('CANIS_ROLE_LEVEL_MANAGER', 500); // manager levels: 401-500
@@ -35,6 +35,7 @@ $base['runtimePath'] = CANIS_APP_INSTALL_PATH . DIRECTORY_SEPARATOR . 'runtime';
 if (!isset($base['bootstrap'])) {
 	$base['bootstrap'] = [];
 }
+$base['bootstrap'][] = 'collectors';
 $base['bootstrap'][] = Bootstrap::className();
 $base['extensions'] = include(CANIS_APP_VENDOR_PATH . DIRECTORY_SEPARATOR . 'yiisoft' . DIRECTORY_SEPARATOR . 'extensions.php');
 
@@ -67,6 +68,17 @@ if (!isset($base['components']['classes'])) {
 if (!isset($base['components']['db'])) {
 	$base['components']['db'] = include 'database.php';
 }
+if (!isset($base['components']['collectors'])) {
+	$collectorsConfigPath = CANIS_APP_CONFIG_PATH . DIRECTORY_SEPARATOR . 'collectors.php';
+	if (file_exists($collectorsConfigPath)) {
+		$base['components']['collectors'] = include $collectorsConfigPath;
+	} else {
+    	$base['components']['collectors'] = include 'collectors.php';
+	}
+}
+if (!isset($base['components']['docker'])) {
+	$base['components']['docker'] = include 'docker.php';
+}
 if (!isset($base['components']['cache'])) {
 	if (isset($base['components']['redis'])) {
 		$base['components']['cache'] = [
@@ -88,11 +100,11 @@ if (!isset($base['components']['gk'])) {
 		'class' => Gatekeeper::className()
 	];
 }
-if (class_exists('canis\wdf\models\User')) {
+if (class_exists('canis\appFarm\models\User')) {
 	$base['components']['user'] = [
 	    'class' => 'canis\web\User',
 	    'enableAutoLogin' => false,
-	    'identityClass' => 'canis\wdf\models\User',
+	    'identityClass' => 'canis\appFarm\models\User',
 	    'loginUrl' => ['/user/login'],
 	];
 }

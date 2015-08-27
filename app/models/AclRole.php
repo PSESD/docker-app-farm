@@ -6,12 +6,12 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\models;
+namespace canis\appFarm\models;
 
 /**
  * AclRole is the model class for table "acl_role".
  */
 class AclRole extends \canis\db\models\AclRole
 {
-    public static $queryClass = 'canis\wdf\models\AclRoleQuery';
+    public static $queryClass = 'canis\appFarm\models\AclRoleQuery';
 }

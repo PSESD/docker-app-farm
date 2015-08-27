@@ -5,7 +5,7 @@ use yii\widgets\ActiveForm;
 /**
  * @var yii\base\View $this
  * @var yii\widgets\ActiveForm $form
- * @var canis\wdf\models\LoginForm $model
+ * @var canis\appFarm\models\LoginForm $model
  */
 
 $this->title = 'Login';

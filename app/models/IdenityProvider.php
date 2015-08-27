@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\models;
+namespace canis\appFarm\models;
 
 /**
  * IdentityProvider is the model class for table "identity_provider".

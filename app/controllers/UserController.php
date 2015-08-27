@@ -6,13 +6,14 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\controllers;
+namespace canis\appFarm\controllers;
 
 use Yii;
-use canis\wdf\models\LoginForm;
+use canis\appFarm\models\LoginForm;
 
-class UserController extends \canis\wdf\components\web\Controller
+class UserController extends \canis\appFarm\components\web\Controller
 {
+    
 	/**
      * The login page for the application.
      */

@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\components\web;
+namespace canis\appFarm\components\web;
 
 use Yii;
 

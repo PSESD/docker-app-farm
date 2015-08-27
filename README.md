@@ -1,2 +1,4 @@
-# canis/wdf
+# Docker App Farm
+
+Mostly just for managing WordPress instances
 

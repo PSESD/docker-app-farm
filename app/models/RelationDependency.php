@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\models;
+namespace canis\appFarm\models;
 
 /**
  * RelationDepdency is the model class for table "relation_dependency".

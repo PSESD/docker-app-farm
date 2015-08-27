@@ -3,3 +3,4 @@ composer.lock
 /vendor/
 /docker-compose.yml
 .DS_Store
+/certs/

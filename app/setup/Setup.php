@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\setup;
+namespace canis\appFarm\setup;
 
 
 /**
@@ -22,6 +22,18 @@ class Setup extends \canis\setup\Setup
 		];
 		$tasks[] = [
 			'class' => \canis\setup\tasks\Database::className()
+		];
+		$tasks[] = [
+			'class' => tasks\Groups::className()
+		];
+		$tasks[] = [
+			'class' => tasks\Acl::className()
+		];
+		$tasks[] = [
+			'class' => tasks\AdminUser::className()
+		];
+		$tasks[] = [
+			'class' => tasks\Collectors::className()
 		];
 		return $tasks;
 	}

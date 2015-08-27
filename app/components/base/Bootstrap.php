@@ -6,7 +6,7 @@
  * @license http://canis.io/license/
  */
 
-namespace canis\wdf\components\base;
+namespace canis\appFarm\components\base;
 
 use yii\base\BootstrapInterface;
 
