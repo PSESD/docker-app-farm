@@ -28,5 +28,11 @@ class Application extends \canis\appFarm\components\applications\Application
 		$recipeClass = Recipe::className();
 		return new $recipeClass;
 	}
+
+	public function getActions($instance)
+	{
+		$actions = [];
+		return $actions;
+	}
 }
 ?>

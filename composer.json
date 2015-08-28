@@ -32,6 +32,7 @@
         "canis/yii2-notification-engine": "*",
         "bower-asset/canis-assets-lib": "0.1.*",
         "bower-asset/canis-log-viewer": "0.1.*",
+        "bower-asset/canis-expandable": "0.1.*",
         "stage1/docker-php": "@dev"
     },
     "require-dev": {

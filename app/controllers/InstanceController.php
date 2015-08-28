@@ -97,7 +97,8 @@ class InstanceController extends \canis\appFarm\components\web\Controller
             $this->params['model']->active = 1;
             if ($this->params['model']->save()) {
                 Yii::$app->response->success = 'Instance of \'' . $application->name .'\' created!';
-                Yii::$app->response->refresh = true;
+                Yii::$app->response->task = 'trigger';
+                Yii::$app->response->trigger = [['refresh', '.instance-manager']];
                 return;
             }
         }
@@ -105,7 +106,42 @@ class InstanceController extends \canis\appFarm\components\web\Controller
         Yii::$app->response->task = 'dialog';
         Yii::$app->response->labels['submit'] = 'Create';
         Yii::$app->response->taskOptions = ['title' => 'Create Instance of ' . $application->name, 'width' => '800px'];
+    }
 
+    /**
+     * [[@doctodo method_description:actionViewLog]].
+     *
+     * @throws HttpException [[@doctodo exception_description:HttpException]]
+     * @return [[@doctodo return_type:actionViewLog]] [[@doctodo return_description:actionViewLog]]
+     *
+     */
+    public function actionViewStatusLog()
+    {
+        if (empty($_GET['id']) || !($instance = Instance::get($_GET['id']))) {
+            throw new HttpException(404, 'Instance could not be found');
+        }
+        $this->params['instance'] = $instance;
+        if (Yii::$app->request->isAjax && !empty($_GET['package'])) {
+            Yii::$app->response->data = $instance->statusLogPackage;
+            return;
+        } elseif (Yii::$app->request->isAjax) {
+            Yii::$app->response->taskOptions = ['title' => 'View Log', 'modalClass' => 'modal-xl'];
+            Yii::$app->response->task = 'dialog';
+        }
+        Yii::$app->response->view = 'view_status_log';
+    }
+
+    /**
+     * The landing page for the application.
+     */
+    public function actionPackage()
+    {
+        Yii::$app->response->data = [];
+        Yii::$app->response->data['instances'] = [];
+        foreach (Instance::find()->all() as $instance) {
+            Yii::$app->response->data['instances'][$instance->id] = $instance->dataObject->package;
+        }
+        return;
     }
 }
 ?>

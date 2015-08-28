@@ -68,15 +68,5 @@ class AppController extends \canis\appFarm\components\web\Controller
         }
         return true;
     }
-
-	/**
-     * The landing page for the application.
-     */
-    public function actionPackage()
-    {
-        Yii::$app->response->data = [];
-        Yii::$app->response->data['instances'] = Instance::find()->all();
-        return;
-    }
 }
 ?>

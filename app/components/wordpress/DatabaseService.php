@@ -19,7 +19,7 @@ class DatabaseService extends \canis\appFarm\components\applications\Service
 	public function getBaseEnvironment()
 	{
 		return [
-			'DB_NAME': 'wordpress'
+			'DB_NAME' => 'wordpress'
 		];
 	}
 	public function getExpose()

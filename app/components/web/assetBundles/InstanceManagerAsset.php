@@ -20,6 +20,7 @@ class InstanceManagerAsset extends AssetBundle
         'js/canis.instanceManager.js',
     ];
     public $depends = [
-        'canis\appFarm\components\web\assetBundles\AppAsset'
+        'canis\appFarm\components\web\assetBundles\AppAsset',
+        'canis\web\assetBundles\CanisLogViewerAsset'
     ];
 }

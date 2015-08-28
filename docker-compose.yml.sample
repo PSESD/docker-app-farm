@@ -10,6 +10,7 @@ web:
     - "80"
   links:
     - db
+    - cache
   privileged: true
   environment:
     VIRTUAL_HOST: ~^appFarm\..*
@@ -25,3 +26,10 @@ db:
     - "3360"
   environment:
     DB_NAME: "appFarm"
+cache:
+  restart: always
+  image: jacobom/lemp:redis
+  ports:
+    - "6379"
+  expose:
+    - "6379"

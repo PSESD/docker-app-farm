@@ -10,11 +10,33 @@ namespace canis\appFarm\components\applications;
 
 use Yii;
 
-class Service extends \canis\base\Component
+abstract class Service extends \canis\base\Component
 {
-	public $recipe;
+	public $instance;
+	public function __sleep()
+    {
+        $keys = array_keys((array) $this);
+        $bad = ["instance"];
+        foreach ($keys as $k => $key) {
+            if (in_array($key, $bad)) {
+                unset($keys[$k]);
+            }
+        }
+        return $keys;
+    }
+
 	abstract public function getImage();
 	
+	public function createInstance($id, $applicationInstance)
+	{
+		$serviceInstance = [];
+		$serviceInstance['class'] = ServiceInstance::className();
+		$serviceInstance['service'] = $this;
+		$serviceInstance['instanceId'] = $id;
+		$serviceInstance['applicationInstance'] = $applicationInstance;
+		return $this->instance = Yii::createObject($serviceInstance);
+	}
+
 	public function afterCreate($serviceInstance)
 	{
 		return true;

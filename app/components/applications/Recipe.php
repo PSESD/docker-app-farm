@@ -23,7 +23,7 @@ abstract class Recipe extends \canis\base\Component
 		if ($this->_services === null) {
 			$this->_services = [];
 			foreach ($this->serviceConfig as $id => $config) {
-				$config['recipe'] = $this;
+				// $config['recipe'] = $this;
 				$this->_services[$id] = Yii::createObject($config);
 			}
 		}

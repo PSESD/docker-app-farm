@@ -53,4 +53,8 @@ if (($error = Yii::$app->session->getFlash('error', false, true))) {
 }
 echo $content;
 echo Html::endTag('div');
+
+if (defined('CANIS_APP_DATABASE_HOST')) {
+    echo '<!-- DB: '. gethostbyname(CANIS_APP_DATABASE_HOST) .'-->';
+}
 $this->endContent();

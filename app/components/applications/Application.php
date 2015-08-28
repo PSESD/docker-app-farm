@@ -30,6 +30,8 @@ abstract class Application extends \canis\base\Component implements \canis\base\
     }
 
     abstract public function setupFields();
+    abstract public function getRecipe();
+    abstract public function getActions($instance);
 
     final public function baseFields()
     {

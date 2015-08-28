@@ -20,8 +20,8 @@ class WebService extends \canis\appFarm\components\applications\Service
 	public function getBaseEnvironment()
 	{
 		return [
-			'DB_NAME': 'wordpress',
-			'NGINX_ERROR_LOG_LEVEL': 'notice'
+			'DB_NAME' => 'wordpress',
+			'NGINX_ERROR_LOG_LEVEL' => 'notice'
 		];
 	}
 	
@@ -45,7 +45,7 @@ class WebService extends \canis\appFarm\components\applications\Service
 	public function getLinks()
 	{
 		return [
-			DatabaseService::className()
+			'db'
 		];
 	}
 

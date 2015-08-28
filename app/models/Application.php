@@ -43,7 +43,7 @@ class Application extends \canis\db\ActiveRecordRegistry
             [['created', 'modified'], 'safe'],
             [['id'], 'string', 'max' => 36],
             [['name', 'system_id'], 'string', 'max' => 255],
-            [['id'], 'exist', 'skipOnError' => true, 'targetClass' => Registry::className(), 'targetAttribute' => ['id' => 'id']],
+            // [['id'], 'exist', 'skipOnError' => true, 'targetClass' => Registry::className(), 'targetAttribute' => ['id' => 'id']],
         ];
     }
 
