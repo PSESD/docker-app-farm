@@ -3,7 +3,7 @@ cd /tmp
 mkdir /var/www/web
 wget -q https://wordpress.org/latest.tar.gz
 if [ -e "latest.tar.gz" ]; then
-	tar xvzf latest.tar.gz -C /var/www/web --strip-components=1
+	tar xzf latest.tar.gz -C /var/www/web --strip-components=1
 	rm latest.tar.gz
 	cd /var/www
 	chown www-data -R *

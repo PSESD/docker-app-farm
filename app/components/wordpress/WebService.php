@@ -64,7 +64,7 @@ class WebService extends \canis\appFarm\components\applications\Service
 		$response = $serviceInstance->execCommand([
 			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh | /bin/bash"
 		]);
-		$installWordPressResponse = $response->getBody()->__string();
+		$installWordPressResponse = $response->getBody()->__toString();
 		$installWordPressResponse = preg_replace('/[^\x20-\x7E]/','', $installWordPressResponse);
 		if (strpos($installWordPressResponse, '----INSTALL_SUCCESS----') === false) {
 			$serviceInstance->applicationInstance->statusLog->addError('Installation of WordPress failed', ['data' => $installWordPressResponse]);
