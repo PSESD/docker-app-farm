@@ -25,7 +25,8 @@ class m150000_000000_initial_core extends \canis\db\Migration
             'initialized' => 'bool NOT NULL DEFAULT 0',
             'checked' => 'datetime DEFAULT NULL',
             'created' => 'datetime DEFAULT NULL',
-            'modified' => 'datetime DEFAULT NULL'
+            'modified' => 'datetime DEFAULT NULL',
+            'terminated' => 'datetime DEFAULT NULL'
         ]);
 
         $this->addForeignKey('instanceRegistry', 'instance', 'id', 'registry', 'id', 'CASCADE', 'CASCADE');

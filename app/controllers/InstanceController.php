@@ -131,6 +131,15 @@ class InstanceController extends \canis\appFarm\components\web\Controller
         Yii::$app->response->view = 'view_status_log';
     }
 
+    public function actionAction()
+    {
+        if (empty($_POST['id']) || !($instance = Instance::get($_POST['id']))) {
+            throw new HttpException(404, 'Instance could not be found');
+        }
+        Yii::$app->response->task = 'trigger';
+        $instance->dataObject->handleAction($_POST['action']);
+    }
+    
     /**
      * The landing page for the application.
      */

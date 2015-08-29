@@ -24,6 +24,7 @@ class ApplicationInstance extends \canis\base\Component
 	protected $_services = [];
 	protected $_cache = [];
 	protected $_statusLog;
+	protected $_startedOrder = [];
 
 	public function __sleep()
     {
@@ -45,12 +46,47 @@ class ApplicationInstance extends \canis\base\Component
         }
     }
 
-    public function getService($id)
+    public function getServiceInstance($id)
     {
     	if (isset($this->_services[$id])) {
     		return $this->_services[$id];
     	}
     	return false;
+    }
+
+    public function handleAction($actionId, $config = false)
+    {
+    	$actions = array_merge(static::actions(), $this->application->object->actions($this));
+    	if (!isset($actions[$actionId])) {
+    		Yii::$app->response->error = 'Unable to find action \''. $actionId .'\'';
+    		return true;
+    	}
+    	$action = $actions[$actionId];
+    	$actionHandler = $action['handler'];
+    	$setupFields = $actionHandler::setupFields();
+    	if (empty($setupFields) || !empty($config)) {
+    		if (empty($config)) {
+    			$config = [];
+    		}
+    		$config['instanceId'] = $this->model->id;
+    		try {
+	    		if (!($deferredAction = $actionHandler::setup($config))) {
+		    		Yii::$app->response->error = 'Unable to initiate deferred action \''. $actionId .'\'';
+		    		return true;
+	    		} else {
+	            	Yii::$app->response->task = 'client';
+	            	Yii::$app->response->clientTask = 'deferredAction';
+	            	Yii::$app->response->taskOptions = $deferredAction->package();
+	    		}
+	    	} catch (\Exception $e) {
+	    		Yii::$app->response->error = $e->__toString();
+	    		return true;
+	    	}
+    	} else {
+    		
+			Yii::$app->response->view = 'setup_action';
+			return false;
+		}
     }
 
     public function initialize()
@@ -67,6 +103,7 @@ class ApplicationInstance extends \canis\base\Component
         $application = $applicationItem->object;
         $recipe = $application->recipe;
         $services = $recipe->services;
+
         // set up service objects
         $this->statusLog->addInfo('Initiating service objects');
         foreach ($services as $id => $service) {
@@ -76,6 +113,7 @@ class ApplicationInstance extends \canis\base\Component
         foreach ($this->_services as $id => $service) {
         	if (!$service->check()) {
         		$this->statusLog->addError('Service \''. $id .'\' failed its settings checkup');
+        		$this->updateStatus('failed');
         		return false;
         	}
         }
@@ -83,7 +121,20 @@ class ApplicationInstance extends \canis\base\Component
         // create services
         $this->updateStatus('creating_services');
         $this->statusLog->addInfo('Creating services');
+        foreach ($this->_services as $id => $service) {
+        	if (!$service->getContainer()) {
+        		$this->updateStatus('failed');
+        		return false;
+        	}
+        }
+        $this->save();
 
+        // starting services
+        $this->updateStatus('starting_services');
+        if(!$this->start()) {
+        	$this->updateStatus('failed');
+        	return false;
+        }
 
         // wait for services to start
         $this->updateStatus('waiting');
@@ -97,8 +148,55 @@ class ApplicationInstance extends \canis\base\Component
         $this->updateStatus('verifying');
         $this->statusLog->addInfo('Verifying install');
 
+        $this->updateStatus('ready');
+        return true;
+    }
 
-        return false;
+    public function terminate()
+    {
+    	$status = $this->applicationStatus;
+        $this->statusLog->addInfo('Terminating');
+    	if ($status && $status !== 'stopped') {
+        	$this->statusLog->addError('Could not terminate due to application status ('. $status .')');
+    		return false;
+    	}
+        $this->updateStatus('terminating');
+        foreach ($this->_services as $id => $serviceInstance) {
+        	if (!$serviceInstance->terminate()) {
+        		$this->statusLog->addError('Could not terminate service \''. $id .'\'');
+        		return false;
+        	}
+        }
+        $this->model->terminated = date('Y-m-d H:i:s');
+        $this->model->active = 0;
+        $this->updateStatus('terminated');
+        return $this->model->save();
+    }
+
+    public function getApplicationStatus()
+    {
+    	if (!($this->status === 'ready' || $this->status === 'failed')) {
+    		return false;
+    	}
+    	if (empty($this->_services)) {
+    		return false;
+    	}
+    	$running = [];
+    	$stopped = [];
+    	foreach ($this->_services as $id => $serviceInstance) {
+    		if ($serviceInstance->isRunning()) {
+    			$running[] = $id;
+    		} else {
+    			$stopped[] = $id;
+    		}
+    	}
+    	if (empty($stopped)) {
+    		return 'running';
+    	} elseif (!empty($stopped) && !empty($running)) {
+    		return 'partially_running';
+    	} else {
+    		return 'stopped';
+    	}
     }
 
     public function getAttributes()
@@ -130,6 +228,94 @@ class ApplicationInstance extends \canis\base\Component
     	return $this->_cache['application'];
     }
 
+    public function restart()
+    {
+    	if ($this->stop()) {
+    		if ($this->start()) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+
+    public function start()
+    {
+    	$self = $this;
+    	$starting = [];
+    	$started = [];
+        $this->statusLog->addInfo('Starting services');
+        $startService = function ($serviceId) use ($self, $started, $starting, &$startService) {
+        	if (in_array($serviceId, $started)) { return true; }
+        	if (in_array($serviceId, $starting)) { return false; }
+        	$starting[] = $serviceId;
+        	if (!($serviceInstance = $self->getServiceInstance($serviceId))) {
+        		return false;
+        	}
+        	if (!empty($serviceInstance->service->links)) {
+	        	foreach ($serviceInstance->service->links as $linkedServiceId) {
+        			if (!$startService($linkedServiceId)) {
+        				return false;
+        			}
+	        	}
+	        	sleep(5);
+        	}
+        	if ($serviceInstance->isStarted() || $serviceInstance->start()) {
+        		$started[] = $serviceId;
+        		$self->statusLog->addInfo('Service \''. $serviceId .'\' has been started');
+        		return true;
+        	}
+        		$self->statusLog->addInfo('Unable to start service  \''. $serviceId .'\'');
+        	return false;
+        };
+
+
+        foreach ($this->_services as $serviceId => $serviceInstance) {
+        	if (!$startService($serviceId)) {
+        		return false;
+        	}
+        }
+        return true;
+    }
+
+    public function stop()
+    {
+    	$self = $this;
+    	$stopping = [];
+    	$stopped = [];
+        $this->statusLog->addInfo('Stopping services');
+        $stopService = function ($serviceId) use ($self, $stopped, $stopping, &$stopService) {
+        	if (in_array($serviceId, $stopped)) { return true; }
+        	if (in_array($serviceId, $stopping)) { return false; }
+        	$stopping[] = $serviceId;
+        	if (!($serviceInstance = $self->getServiceInstance($serviceId))) {
+        		return false;
+        	}
+        	if (!empty($serviceInstance->service->links)) {
+	        	foreach ($serviceInstance->service->links as $linkedServiceId) {
+        			if (!$stopService($linkedServiceId)) {
+        				return false;
+        			}
+	        	}
+	        	sleep(5);
+        	}
+        	if (!$serviceInstance->isStarted() || $serviceInstance->stop()) {
+        		$stopped[] = $serviceId;
+        		$self->statusLog->addInfo('Service \''. $serviceId .'\' has been stopped');
+        		return true;
+        	}
+        	$self->statusLog->addInfo('Unable to stop service  \''. $serviceId .'\'');
+        	return false;
+        };
+
+
+        foreach ($this->_services as $serviceId => $serviceInstance) {
+        	if (!$stopService($serviceId)) {
+        		return false;
+        	}
+        }
+        return true;
+    }
+
     public function setAttributes($attributes)
     {
     	$oldHostname = $newHostname = false;
@@ -143,39 +329,78 @@ class ApplicationInstance extends \canis\base\Component
     	}
     }
 
-    public function getActions()
+    public function actions()
     {
+    	$self = $this;
     	$actions = [];
-		$actions['view_status_log'] = [
+    	$actions['terminate'] = [
+    		'options' => [
+				'icon' => 'fa fa-trash',
+				'label' => 'Terminate'
+			],
+			'available' => function($self) {
+				return in_array($self->realStatus , ['stopped', 'failed']);
+			},
+			'handler' => \canis\appFarm\components\applications\actions\Terminate::className()
+		];
+		$actions['stop'] = [
+    		'options' => [
+				'icon' => 'fa fa-stop',
+				'label' => 'Stop'
+			],
+			'available' => function($self) {
+				return in_array($self->realStatus , ['running']);
+			},
+			'handler' => \canis\appFarm\components\applications\actions\Stop::className()
+		];
+		$actions['restart'] = [
+    		'options' => [
+				'icon' => 'fa fa-refresh',
+				'label' => 'Restart'
+			],
+			'available' => function($self) {
+				return in_array($self->realStatus , ['running']);
+			},
+			'handler' => \canis\appFarm\components\applications\actions\Restart::className()
+		];
+		$actions['start'] = [
+    		'options' => [
+				'icon' => 'fa fa-play',
+				'label' => 'Start'
+			],
+			'available' => function($self) {
+				return in_array($self->realStatus , ['stopped']);
+			},
+			'handler' => \canis\appFarm\components\applications\actions\Start::className()
+		];
+		return $actions;
+    }
+
+    public function getWebActions()
+    {
+    	$actions = array_merge(static::actions(), $this->application->object->actions($this));
+    	$defaultAction = [
+    		'available' => function($self) {
+    			return true;
+    		}
+    	];
+    	$webActions = [];
+    	$webActions['view_status_log'] = [
 			'icon' => 'fa fa-exclamation-circle',
 			'label' => 'View Status Log',
 			'url' => Url::to(['/instance/view-status-log', 'id' => $this->model->id]),
 			'background' => true
 		];
-    	if (in_array($this->status , ['stopped', 'failed'])) {
-    		$actions['terminate'] = [
-    			'icon' => 'fa fa-trash',
-    			'label' => 'Terminate'
-    		];
-    	}
-    	if (empty($this->model->initialized)) {
-    		return $actions;
-    	}
-    	if ($this->status === 'running') {
-    		$actions['stop'] = [
-    			'icon' => 'fa fa-stop',
-    			'label' => 'Stop'
-    		];
-    	} elseif ($this->status === 'stopped') {
-    		$actions['start'] = [
-    			'icon' => 'fa fa-play',
-    			'label' => 'Start'
-    		];
-    	}
-    	if ($this->application && $this->status === 'running') {
-    		$actions = array_merge($actions, $this->application->getActions($this));
-    	}
-    	return $actions;
+		$deferredActions = $this->model->deferredActions;
+		if (empty($deferredActions)) {
+	    	foreach ($actions as $actionId => $action) {
+	    		$action = array_merge($defaultAction, $action);
+	    		if ($action['available']($this)) {
+	    			$webActions[$actionId] = $action['options'];
+	    		}
+	    	}
+	    }
+    	return $webActions;
     }
 
 	public function getPrimaryHostname()
@@ -205,6 +430,15 @@ class ApplicationInstance extends \canis\base\Component
 		return $this;
 	}
 
+	public function getRealStatus()
+	{
+		if ($this->status === 'ready' && ($appStatus = $this->applicationStatus)) {
+			return $appStatus;
+		} else {
+			return $this->status;
+		}
+	}
+
 	public function getPackage()
 	{
 		$p = [];
@@ -212,10 +446,18 @@ class ApplicationInstance extends \canis\base\Component
 		$p['application_id'] = $this->model->application_id;
 		$p['initialized'] = $this->model->initialized;
 		$p['name'] = $this->model->name;
-		$p['status'] = $this->status;
+		$p['status'] = $this->realStatus;
+		$p['appStatus'] = $this->applicationStatus;
 		$p['prefix'] = $this->prefix;
 		$p['attributes'] = $this->attributes;
-		$p['actions'] = $this->actions;
+		$p['actions'] = $this->webActions;
+		$p['services'] = false;
+		if (!empty($this->_services)) {
+			$p['services'] = [];
+			foreach ($this->_services as $id => $serviceInstance) {
+				$p['services'][$id] = $serviceInstance->getPackage();
+			}
+		}
 		return $p;
 	}
 
@@ -233,6 +475,11 @@ class ApplicationInstance extends \canis\base\Component
         	$this->saveCache()->save();
         } else {
         	$checkLog = Cacher::get([get_called_class(), $this->model->primaryKey, $this->model->created]);
+        	if (!$checkLog) {	
+		    	$checkLog = $this->_statusLog = new Status;
+		    	$checkLog->lastUpdate = microtime(true);
+		    	$this->saveCache()->save();
+        	}
         	if ($checkLog->lastUpdate && $this->_statusLog->lastUpdate && $checkLog->lastUpdate > $this->_statusLog->lastUpdate) {
         		$this->_statusLog = $checkLog;
         	}

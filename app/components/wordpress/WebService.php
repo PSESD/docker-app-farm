@@ -12,6 +12,11 @@ use Yii;
 
 class WebService extends \canis\appFarm\components\applications\Service
 {
+	public function getServiceName()
+	{
+		return 'Web';
+	}
+
 	public function getImage()
 	{
 		return 'jacobom/lemp:web';

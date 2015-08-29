@@ -3,5 +3,5 @@
 sudo php /var/www/scripts/cert_init.php
 sudo php /var/www/scripts/docker_host_discover.php
 
-sleep 30
-sudo -u www-data php /var/www/bin/yii daemon/run
+# sleep 30
+# sudo -u www-data php /var/www/bin/yii daemon/run

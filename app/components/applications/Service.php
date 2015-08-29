@@ -25,6 +25,7 @@ abstract class Service extends \canis\base\Component
         return $keys;
     }
 
+	abstract public function getServiceName();
 	abstract public function getImage();
 	
 	public function createInstance($id, $applicationInstance)
@@ -32,7 +33,7 @@ abstract class Service extends \canis\base\Component
 		$serviceInstance = [];
 		$serviceInstance['class'] = ServiceInstance::className();
 		$serviceInstance['service'] = $this;
-		$serviceInstance['instanceId'] = $id;
+		$serviceInstance['serviceId'] = $id;
 		$serviceInstance['applicationInstance'] = $applicationInstance;
 		return $this->instance = Yii::createObject($serviceInstance);
 	}

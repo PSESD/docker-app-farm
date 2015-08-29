@@ -5,13 +5,11 @@
  * @copyright Copyright (c) 2015 Canis
  * @license http://canis.io/license/
  */
-
 namespace canis\appFarm\components\engine;
 
 use Yii;
 use canis\appFarm\models\Application;
 use canis\appFarm\models\Instance;
-
 class Engine extends \canis\base\Component
 {
 	static public function checkUninitialized()
@@ -42,7 +40,6 @@ class Engine extends \canis\base\Component
 			$instance->initialized = 1;
 			$instance->save();
 		}
-		throw new \Exception("o");
 	}
 }
 ?>

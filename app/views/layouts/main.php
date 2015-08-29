@@ -3,6 +3,7 @@ use yii\helpers\Html;
 use yii\bootstrap\NavBar;
 use yii\bootstrap\Nav;
 use yii\widgets\Breadcrumbs;
+use canis\deferred\widgets\NavItem as DeferredNavItem;
 
 $this->beginContent('@canis/appFarm/views/layouts/frame.php');
 NavBar::begin([
@@ -16,7 +17,7 @@ NavBar::begin([
 //     ],
 // ]);
 $userMenu = [];
-//$userMenu[] = DeferredNavItem::widget([]);
+$userMenu[] = DeferredNavItem::widget([]);
 if (Yii::$app->user->isGuest) {
     $userMenu[] = ['label' => 'Sign In', 'url' => ['/user/login'],
                     'linkOptions' => ['data-method' => 'post'], ];

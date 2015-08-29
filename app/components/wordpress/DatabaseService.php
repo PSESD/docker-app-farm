@@ -12,6 +12,10 @@ use Yii;
 
 class DatabaseService extends \canis\appFarm\components\applications\Service
 {
+	public function getServiceName()
+	{
+		return 'Database';
+	}
 	public function getImage()
 	{
 		return 'jacobom/lemp:mysql';

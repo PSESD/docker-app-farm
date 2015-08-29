@@ -6,6 +6,7 @@ use Yii;
 use canis\caching\Cacher;
 use canis\helpers\Date;
 use canis\helpers\StringHelper;
+use canis\deferred\models\DeferredAction;
 use yii\helpers\Url;
 
 /**
@@ -75,7 +76,7 @@ class Instance extends \canis\db\ActiveRecordRegistry
             [['application_id'], 'required'],
             [['data'], 'string'],
             [['active', 'initialized'], 'integer'],
-            [['checked', 'created', 'modified'], 'safe'],
+            [['checked', 'created', 'terminated', 'modified'], 'safe'],
             [['id', 'application_id'], 'string', 'max' => 36],
             [['name'], 'string', 'max' => 255],
             [['application_id'], 'exist', 'skipOnError' => true, 'targetClass' => Application::className(), 'targetAttribute' => ['application_id' => 'id']],
@@ -196,5 +197,18 @@ class Instance extends \canis\db\ActiveRecordRegistry
         }
         $p['output'] = false;
         return $p;
+    }
+
+    public function getDeferredActions()
+    {
+        $actions = DeferredAction::find()->where(['status' => ['queued', 'starting', 'running']])->all();
+        $myActions = [];
+        foreach ($actions as $action) {
+            if (!$action->actionObject) { continue; }
+            if (isset($action->actionObject->config['instanceId']) && $action->actionObject->config['instanceId'] === $this->id) {
+                $myActions[] = $action;
+            }
+        }
+        return $myActions;
     }
 }

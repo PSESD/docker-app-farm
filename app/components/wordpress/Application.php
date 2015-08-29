@@ -29,7 +29,7 @@ class Application extends \canis\appFarm\components\applications\Application
 		return new $recipeClass;
 	}
 
-	public function getActions($instance)
+	public function actions($instance)
 	{
 		$actions = [];
 		return $actions;
