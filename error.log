@@ -95,3 +95,12 @@
 [28-Aug-2015 16:44:02 America/Los_Angeles] PHP Fatal error:  Class 'canis\appFarm\models\DeferredActions' not found in /var/www/app/models/Instance.php on line 203
 [28-Aug-2015 16:44:17 America/Los_Angeles] PHP Fatal error:  Class 'canis\appFarm\models\DeferredActions' not found in /var/www/app/models/Instance.php on line 203
 [28-Aug-2015 16:44:28 America/Los_Angeles] PHP Fatal error:  Class 'canis\appFarm\models\DeferredActions' not found in /var/www/app/models/Instance.php on line 204
+[28-Aug-2015 17:12:10 America/Los_Angeles] PHP Parse error:  syntax error, unexpected 'if' (T_IF) in /var/www/app/components/applications/ServiceInstance.php on line 305
+[28-Aug-2015 17:12:16 America/Los_Angeles] PHP Parse error:  syntax error, unexpected 'if' (T_IF) in /var/www/app/components/applications/ServiceInstance.php on line 305
+[28-Aug-2015 17:12:31 America/Los_Angeles] PHP Parse error:  syntax error, unexpected 'if' (T_IF) in /var/www/app/components/applications/ServiceInstance.php on line 305
+[28-Aug-2015 17:31:54 America/Los_Angeles] PHP Parse error:  syntax error, unexpected '}' in /var/www/app/components/applications/ServiceInstance.php on line 309
+[28-Aug-2015 17:31:55 America/Los_Angeles] PHP Parse error:  syntax error, unexpected '}' in /var/www/app/components/applications/ServiceInstance.php on line 309
+[28-Aug-2015 17:32:09 America/Los_Angeles] PHP Parse error:  syntax error, unexpected '}' in /var/www/app/components/applications/ServiceInstance.php on line 309
+[28-Aug-2015 17:32:12 America/Los_Angeles] PHP Parse error:  syntax error, unexpected '}' in /var/www/app/components/applications/ServiceInstance.php on line 309
+[28-Aug-2015 17:32:21 America/Los_Angeles] PHP Parse error:  syntax error, unexpected '}' in /var/www/app/components/applications/ServiceInstance.php on line 309
+[28-Aug-2015 17:32:28 America/Los_Angeles] PHP Parse error:  syntax error, unexpected '}' in /var/www/app/components/applications/ServiceInstance.php on line 309

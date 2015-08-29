@@ -139,10 +139,14 @@ class ApplicationInstance extends \canis\base\Component
         // wait for services to start
         $this->updateStatus('waiting');
         $this->statusLog->addInfo('Waiting for services to start up');
+        sleep(5);
 
         // set up application
         $this->updateStatus('setting_up');
         $this->statusLog->addInfo('Setting up application');
+        foreach ($this->_services as $serviceId => $serviceInstance) {
+        	$serviceInstance->service->afterCreate($serviceInstance);
+        }
 
         // verify application
         $this->updateStatus('verifying');
@@ -156,10 +160,10 @@ class ApplicationInstance extends \canis\base\Component
     {
     	$status = $this->applicationStatus;
         $this->statusLog->addInfo('Terminating');
-    	if ($status && $status !== 'stopped') {
-        	$this->statusLog->addError('Could not terminate due to application status ('. $status .')');
-    		return false;
-    	}
+    	// if ($status && $status !== 'stopped') {
+     //    	$this->statusLog->addError('Could not terminate due to application status ('. $status .')');
+    	// 	return false;
+    	// }
         $this->updateStatus('terminating');
         foreach ($this->_services as $id => $serviceInstance) {
         	if (!$serviceInstance->terminate()) {

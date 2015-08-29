@@ -292,6 +292,34 @@ class ServiceInstance extends \canis\base\Component
 		return true;
     }
 
+    public function execCommand($command, $callback = false)
+    {
+    	if (!$this->getContainer()) {
+    		return false;
+    	}
+    	$this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $command]);
+		try {
+			$execute = Yii::$app->docker->docker->getContainerManager()->exec($this->container, $command);
+			$response = Yii::$app->docker->docker->getContainerManager()->execstart($execute);
+			if ($callback) {
+				$callback($command, $response->getBody()->__toString());
+			}
+			return true;
+		} catch (\Exception $e) {
+			$this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $e->__toString(), 'command' => $command, 'usedCallback' => $callback !== false]);
+		    return false;
+		}
+    }
+
+    public function execCommands($commands, $callback = false, $fatalFail = true) {
+    	foreach ($commands as $command) {
+    		if (!$this->execCommand($command, $callback) && $fatalFail) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+
     public function getPackage()
     {
 		$s = [];

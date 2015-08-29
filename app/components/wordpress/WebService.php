@@ -59,6 +59,13 @@ class WebService extends \canis\appFarm\components\applications\Service
 		if (!parent::afterCreate($serviceInstance)) {
 			return false;
 		}
+		$self = $this;
+		$callback = function($command, $response) use (&$self, &$serviceInstance) {
+			$serviceInstance->applicationInstance->statusLog->addInfo('Command output', ['command' => $command, 'response' => $response]);
+		};
+		$serviceInstance->execCommand([
+			'curl', '-sS', 'https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh', '|', 'sudo', 'bash',
+		], $callback);
 		return true;
 	}
 }
