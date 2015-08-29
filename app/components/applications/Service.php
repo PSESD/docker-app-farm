@@ -43,7 +43,7 @@ abstract class Service extends \canis\base\Component
 		return true;
 	}
 
-	public function getBaseEnvironment()
+	public function getBaseEnvironment($service)
 	{
 		return [];
 	}
@@ -78,9 +78,9 @@ abstract class Service extends \canis\base\Component
 		return null;
 	}
 
-	final public function getEnvironment()
+	final public function getEnvironment($instance)
 	{
-		$env = $this->getBaseEnvironment();
+		$env = $this->getBaseEnvironment($instance);
 		return $env;
 	}
 }

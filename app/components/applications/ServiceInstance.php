@@ -71,7 +71,7 @@ class ServiceInstance extends \canis\base\Component
     	if (!empty($this->linkedContainerIds)) {
     		$settings['HostConfig']['Links'] = $this->linkedContainerIds;
     	}
-    	if (($environment = $this->service->environment) && !empty($environment)) {
+    	if (($environment = $this->service->getEnvironment($this)) && !empty($environment)) {
     		$settings['Env'] = [];
     		foreach ($environment as $key => $value) {
     			$settings['Env'][] = $key .'='. $value;

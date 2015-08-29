@@ -22,11 +22,12 @@ class WebService extends \canis\appFarm\components\applications\Service
 		return 'jacobom/lemp:web';
 	}
 	
-	public function getBaseEnvironment()
+	public function getBaseEnvironment($instance)
 	{
 		return [
 			'DB_NAME' => 'wordpress',
-			'NGINX_ERROR_LOG_LEVEL' => 'notice'
+			'NGINX_ERROR_LOG_LEVEL' => 'notice',
+			'VIRTUAL_HOST' => $instance->applicationInstance->attributes['hostname']
 		];
 	}
 	
@@ -61,10 +62,10 @@ class WebService extends \canis\appFarm\components\applications\Service
 		}
 		$self = $this;
 		$callback = function($command, $response) use (&$self, &$serviceInstance) {
-			$serviceInstance->applicationInstance->statusLog->addInfo('Command output', ['command' => $command, 'response' => $response]);
+			file_put_contents('/var/www/'.time().'.txt', $response);
 		};
 		$serviceInstance->execCommand([
-			'curl', '-sS', 'https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh', '|', 'sudo', 'bash',
+			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh | /bin/bash"
 		], $callback);
 		return true;
 	}

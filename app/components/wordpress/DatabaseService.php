@@ -20,7 +20,7 @@ class DatabaseService extends \canis\appFarm\components\applications\Service
 	{
 		return 'jacobom/lemp:mysql';
 	}
-	public function getBaseEnvironment()
+	public function getBaseEnvironment($service)
 	{
 		return [
 			'DB_NAME' => 'wordpress'

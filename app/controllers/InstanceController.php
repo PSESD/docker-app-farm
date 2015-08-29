@@ -147,7 +147,7 @@ class InstanceController extends \canis\appFarm\components\web\Controller
     {
         Yii::$app->response->data = [];
         Yii::$app->response->data['instances'] = [];
-        foreach (Instance::find()->all() as $instance) {
+        foreach (Instance::find()->where(['or', '[[terminated]] IS NULL', 'DATE_ADD([[terminated]], INTERVAL 10 MINUTE) >= NOW()'])->all() as $instance) {
             Yii::$app->response->data['instances'][$instance->id] = $instance->dataObject->package;
         }
         return;
