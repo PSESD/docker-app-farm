@@ -61,12 +61,17 @@ class WebService extends \canis\appFarm\components\applications\Service
 			return false;
 		}
 		$self = $this;
-		$callback = function($command, $response) use (&$self, &$serviceInstance) {
-			file_put_contents('/var/www/'.time().'.txt', $response);
-		};
-		$serviceInstance->execCommand([
+		$response = $serviceInstance->execCommand([
 			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh | /bin/bash"
-		], $callback);
+		]);
+		$installWordPressResponse = $response->getBody()->__string();
+		$installWordPressResponse = preg_replace('/[^\x20-\x7E]/','', $installWordPressResponse);
+		if (strpos($installWordPressResponse, '----INSTALL_SUCCESS----') === false) {
+			$serviceInstance->applicationInstance->statusLog->addError('Installation of WordPress failed', ['data' => $installWordPressResponse]);
+			return false;
+		}  else {
+			$serviceInstance->applicationInstance->statusLog->addInfo('Installation of WordPress succeeded', ['data' => $installWordPressResponse]);
+		}
 		return true;
 	}
 }

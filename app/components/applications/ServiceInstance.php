@@ -302,9 +302,9 @@ class ServiceInstance extends \canis\base\Component
 			$execute = Yii::$app->docker->docker->getContainerManager()->exec($this->container, $command);
 			$response = Yii::$app->docker->docker->getContainerManager()->execstart($execute);
 			if ($callback) {
-				$callback($command, $response->getBody()->__toString());
+				$callback($command, $response);
 			}
-			return true;
+			return $response;
 		} catch (\Exception $e) {
 			$this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $e->__toString(), 'command' => $command, 'usedCallback' => $callback !== false]);
 		    return false;
