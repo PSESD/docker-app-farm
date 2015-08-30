@@ -133,7 +133,7 @@ class WebService extends \canis\appFarm\components\applications\Service
 		$commandTasks['remove_post_1'] = [
 			'description' => 'Delete Demo Post',
 			'cmd' => '/var/www/client/wp post delete 1' . static::generateParams(['user' => $meta['adminUser']]),
-			'test' => 'Success: Deleted post'
+			'test' => 'Success: Trashed post'
 		];
 		$serviceInstance->applicationInstance->clearAttribute('initialUsername');
 		$serviceInstance->applicationInstance->clearAttribute('initialPassword');

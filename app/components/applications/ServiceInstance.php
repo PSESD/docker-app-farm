@@ -307,7 +307,7 @@ class ServiceInstance extends \canis\base\Component
         }
     	$this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $loggedCommand]);
 		try {
-            $command = ['/bin/bash', '-c', $command . " 2>&1 | sed 's/^/  /'"];
+            $command = ['/bin/bash', '-c', $command . " 2>&1 | sed 's/^/ /'"];
 			$execute = Yii::$app->docker->docker->getContainerManager()->exec($this->container, $command);
 			$response = Yii::$app->docker->docker->getContainerManager()->execstart($execute);
 			if ($callback) {
