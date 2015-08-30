@@ -296,13 +296,18 @@ class ServiceInstance extends \canis\base\Component
 		return true;
     }
 
-    public function execCommand($command, $callback = false)
+    public function execCommand($command, $callback = false, $obfuscate = [])
     {
     	if (!$this->getContainer()) {
     		return false;
     	}
-    	$this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $command]);
+        $loggedCommand = $command;
+        foreach ($obfuscate as $o) {
+            $loggedCommand = str_replace($o, str_repeat('*', strlen($o)), $loggedCommand);
+        }
+    	$this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $loggedCommand]);
 		try {
+            $command = ['/bin/bash', '-c', $command . " 2>&1 | sed 's/^/  /'"];
 			$execute = Yii::$app->docker->docker->getContainerManager()->exec($this->container, $command);
 			$response = Yii::$app->docker->docker->getContainerManager()->execstart($execute);
 			if ($callback) {
@@ -310,7 +315,11 @@ class ServiceInstance extends \canis\base\Component
 			}
 			return $response;
 		} catch (\Exception $e) {
-			$this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $e->__toString(), 'command' => $command, 'usedCallback' => $callback !== false]);
+            $error = $e->__toString();
+            foreach ($obfuscate as $o) {
+                $error = str_replace($o, str_repeat('*', strlen($o)), $error);
+            }
+			$this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $error, 'command' => $loggedCommand, 'usedCallback' => $callback !== false]);
 		    return false;
 		}
     }

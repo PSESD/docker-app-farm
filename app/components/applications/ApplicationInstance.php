@@ -145,7 +145,9 @@ class ApplicationInstance extends \canis\base\Component
         $this->updateStatus('setting_up');
         $this->statusLog->addInfo('Setting up application');
         foreach ($this->_services as $serviceId => $serviceInstance) {
-        	$serviceInstance->service->afterCreate($serviceInstance);
+        	if (!$serviceInstance->service->afterCreate($serviceInstance)) {
+        		return false;
+        	}
         }
 
         // verify application
@@ -203,6 +205,10 @@ class ApplicationInstance extends \canis\base\Component
     	}
     }
 
+    public function clearAttribute($k)
+    {
+    	unset($this->_attributes[$k]);
+    }
     public function getAttributes()
     {
     	return $this->_attributes;

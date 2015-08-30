@@ -24,14 +24,14 @@ class Application extends \canis\appFarm\components\applications\Application
 			'label' => 'Site Title',
 			'type' => 'text'
 		];
-		// $fields['adminUsername'] = [
-		// 	'label' => 'Admin Username',
-		// 	'type' => 'text'
-		// ];
-		// $fields['adminPassword'] = [
-		// 	'label' => 'Admin Password',
-		// 	'type' => 'text'
-		// ];
+		$fields['initialUsername'] = [
+			'label' => 'Initial User Username',
+			'type' => 'text'
+		];
+		$fields['initialPassword'] = [
+			'label' => 'Initial User Password',
+			'type' => 'text'
+		];
 		$fields['adminEmail'] = [
 			'label' => 'Admin Email',
 			'type' => 'text'
