@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-sudo -u www-data ./wp-cli.phar "$@"
+cd /var/www/web
+sudo -u www-data /var/www/client/wp-cli.phar "$@"

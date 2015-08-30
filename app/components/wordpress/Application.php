@@ -20,6 +20,22 @@ class Application extends \canis\appFarm\components\applications\Application
 	public function setupFields()
 	{
 		$fields = [];
+		$fields['title'] = [
+			'label' => 'Site Title',
+			'type' => 'text'
+		];
+		// $fields['adminUsername'] = [
+		// 	'label' => 'Admin Username',
+		// 	'type' => 'text'
+		// ];
+		// $fields['adminPassword'] = [
+		// 	'label' => 'Admin Password',
+		// 	'type' => 'text'
+		// ];
+		$fields['adminEmail'] = [
+			'label' => 'Admin Email',
+			'type' => 'text'
+		];
 		return $fields;
 	}
 

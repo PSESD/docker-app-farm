@@ -31,18 +31,18 @@ if [ -e "/var/www/client/wp" ]; then
 	chmod +x wp
 fi
 
-
+cd /var/www
 echo "Downloading wp-cli.yml..."
-if [ -e "/var/www/client/wp-cli.yml" ]; then
-	rm /var/www/client/wp-cli.yml
+if [ -e "/var/www/wp-cli.yml" ]; then
+	rm /var/www/wp-cli.yml
 fi
 
 wget -q https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/wp-cli.yml
 
-if [ -e "/var/www/client/wp-cli.yml" ]; then	
+if [ -e "/var/www/wp-cli.yml" ]; then	
 	if [ -e "/var/www/client/wp" ]; then	
 		if [ -e "/var/www/client/wp-cli.phar" ]; then
-			echo "\n\n\n----WORDPRESS_CLI_INSTALL_SUCCESS----\n\n\n"
+			echo "----WORDPRESS_CLI_INSTALL_SUCCESS----"
 		fi
 	fi
 fi

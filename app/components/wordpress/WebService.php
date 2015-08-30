@@ -55,37 +55,84 @@ class WebService extends \canis\appFarm\components\applications\Service
 		];
 	}
 
+	public function generateMeta($serviceInstance)
+	{
+		$meta = [];
+		$meta['url'] = 'http://' . $serviceInstance->attributes['hostname'];
+		$meta['title'] = $serviceInstance->attributes['title'];
+		$meta['adminUser'] = 'farm' . rand(100,999);
+		$meta['adminPassword'] = substr(hash('sha512',rand()),0,12);
+		$meta['adminEmail'] = $serviceInstance->attributes['adminEmail'];
+		return $meta;
+	}
+
+	public static function generateParams($p)
+	{
+		$s = '';
+		foreach ($p as $k => $v) {
+			$s .= ' --' . $k .'="'.$v.'"';
+		}
+		return $s;
+	}
+
+	public function getWordPressPlugins()
+	{
+		return [
+			'jetpack' => 'jetpack'
+		];
+	}
+
 	public function afterCreate($serviceInstance)
 	{
 		if (!parent::afterCreate($serviceInstance)) {
 			return false;
 		}
 		$self = $this;
-		// Primary WordPress Install
-		$response = $serviceInstance->execCommand([
-			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh | /bin/bash"
-		]);
-		$installWordPressResponse = $response->getBody()->__toString();
-		$installWordPressResponse = preg_replace('/[^\x20-\x7E]/','', $installWordPressResponse);
-		if (strpos($installWordPressResponse, '----WORDPRESS_INSTALL_SUCCESS----') === false) {
-			$serviceInstance->applicationInstance->statusLog->addError('Installation of WordPress failed', ['data' => $installWordPressResponse]);
-			return false;
-		}  else {
-			$serviceInstance->applicationInstance->statusLog->addInfo('Installation of WordPress succeeded', ['data' => $installWordPressResponse]);
+		$meta = $serviceInstance->meta;
+		$commandTasks = [];
+		$commandTasks['cli'] = [
+			'description' => 'Installation of WordPress CLI',
+			'cmd' => 'curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress_cli.sh | /bin/bash',
+			'test' => '----WORDPRESS_CLI_INSTALL_SUCCESS----'
+		];
+		$commandTasks['core_download'] = [
+			'description' => 'Installation of WordPress Core',
+			'cmd' => '/var/www/wp core download',
+			'test' => 'Success: WordPress downloaded.'
+		];
+		$commandTasks['wp_config'] = [
+			'description' => 'Generate wp-config.php',
+			'cmd' => '/var/www/wp core config',
+			'test' => 'Success: Generated wp-config.php file.'
+		];
+		$commandTasks['wp_install'] = [
+			'description' => 'Install WordPress',
+			'cmd' => '/var/www/wp core install' . static::generateParams(['url' => $meta['url'], 'title' => $meta['title'], 'admin_username' => $meta['adminUser'], 'admin_password' => $meta['adminPassword'], 'admin_email' => $meta['adminEmail']]),
+			'test' => 'Success: WordPress installed successfully.'
+		];
+		foreach ($this->getWordPressPlugins() as $id => $plugin) {
+			$commandTasks['plugin_install_' . $id] = [
+				'description' => 'Install Plugin: ' . $id,
+				'cmd' => '/var/www/wp plugin install "' . $plugin .'" --activate '. static::generateParams(['user' => $meta['adminUser']]),
+				'test' => 'Plugin installed successfully.'
+			];
 		}
 
-		// WordPress CLI Install
-		$response = $serviceInstance->execCommand([
-			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress_cli.sh | /bin/bash"
-		]);
-		$installWordPressCLIResponse = $response->getBody()->__toString();
-		$installWordPressCLIResponse = preg_replace('/[^\x20-\x7E]/','', $installWordPressResponse);
-		if (strpos($installWordPressClientResponse, '----WORDPRESS_CLI_INSTALL_SUCCESS----') === false) {
-			$serviceInstance->applicationInstance->statusLog->addError('Installation of WordPress CLI failed', ['data' => $installWordPressCLIResponse]);
-			return false;
-		}  else {
-			$serviceInstance->applicationInstance->statusLog->addInfo('Installation of WordPress CLI succeeded', ['data' => $installWordPressCLIResponse]);
+		foreach ($commandTasks as $id => $command) {
+			$response = $serviceInstance->execCommand([
+				"/bin/bash", "-c", $command['cmd']
+			]);
+			$responseBody = $response->getBody()->__toString();
+			$responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
+			if (strpos($responseBody, $command['test']) === false) {
+				$serviceInstance->applicationInstance->statusLog->addError('Command:' . $command['description'] . ' failed', ['data' => $responseBody]);
+				return false;
+			}  else {
+				$serviceInstance->applicationInstance->statusLog->addInfo('Command:' . $command['description'] . ' succeeded', ['data' => $responseBody]);
+			}
 		}
+
+
 		return true;
 	}
 }

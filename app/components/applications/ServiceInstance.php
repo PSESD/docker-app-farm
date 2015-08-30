@@ -18,8 +18,9 @@ class ServiceInstance extends \canis\base\Component
 	public $serviceId;
 	public $service;
 	public $containerId = false;
-	public $containerName = false;
+    public $containerName = false;
 
+    protected $meta = false;
 	protected $initializing = false;
 	protected $linkedContainerIds = [];
 	protected $container;
@@ -321,6 +322,14 @@ class ServiceInstance extends \canis\base\Component
     		}
     	}
     	return true;
+    }
+
+    public function getMeta()
+    {
+        if (!$this->meta) {
+            $this->meta = $this->service->generateMeta($this);
+        }
+        return $this->meta;
     }
 
     public function getPackage()

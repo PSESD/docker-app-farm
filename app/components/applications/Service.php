@@ -38,6 +38,11 @@ abstract class Service extends \canis\base\Component
 		return $this->instance = Yii::createObject($serviceInstance);
 	}
 
+	public function generateMeta($serviceInstance)
+	{
+		return [];
+	}
+
 	public function afterCreate($serviceInstance)
 	{
 		return true;
