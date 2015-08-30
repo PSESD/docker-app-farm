@@ -61,16 +61,30 @@ class WebService extends \canis\appFarm\components\applications\Service
 			return false;
 		}
 		$self = $this;
+		// Primary WordPress Install
 		$response = $serviceInstance->execCommand([
 			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress.sh | /bin/bash"
 		]);
 		$installWordPressResponse = $response->getBody()->__toString();
 		$installWordPressResponse = preg_replace('/[^\x20-\x7E]/','', $installWordPressResponse);
-		if (strpos($installWordPressResponse, '----INSTALL_SUCCESS----') === false) {
+		if (strpos($installWordPressResponse, '----WORDPRESS_INSTALL_SUCCESS----') === false) {
 			$serviceInstance->applicationInstance->statusLog->addError('Installation of WordPress failed', ['data' => $installWordPressResponse]);
 			return false;
 		}  else {
 			$serviceInstance->applicationInstance->statusLog->addInfo('Installation of WordPress succeeded', ['data' => $installWordPressResponse]);
+		}
+
+		// Primary WordPress Install
+		$response = $serviceInstance->execCommand([
+			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress_cli.sh | /bin/bash"
+		]);
+		$installWordPressCLIResponse = $response->getBody()->__toString();
+		$installWordPressCLIResponse = preg_replace('/[^\x20-\x7E]/','', $installWordPressResponse);
+		if (strpos($installWordPressClientResponse, '----WORDPRESS_CLI_INSTALL_SUCCESS----') === false) {
+			$serviceInstance->applicationInstance->statusLog->addError('Installation of WordPress CLI failed', ['data' => $installWordPressCLIResponse]);
+			return false;
+		}  else {
+			$serviceInstance->applicationInstance->statusLog->addInfo('Installation of WordPress CLI succeeded', ['data' => $installWordPressCLIResponse]);
 		}
 		return true;
 	}

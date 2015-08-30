@@ -1,0 +1,11 @@
+path: ../web
+user: admin
+color: false
+disabled_commands:
+  - db drop
+
+core config:
+	dbuser: root
+	dbpass: root
+	dbhost: db
+	dbname: wordpress

@@ -83,6 +83,9 @@ class ServiceInstance extends \canis\base\Component
     	if (($priviledged = $this->service->priviledged) && !empty($priviledged)) {
     		$settings['HostConfig']['Privileged'] = $priviledged;
     	}
+    	if (($volumesFrom = $this->service->volumesFrom) && !empty($volumesFrom)) {
+    		$settings['HostConfig']['VolumesFrom'] = $volumesFrom;
+    	}
     	if (($binds = $this->service->volumes) && !empty($binds)) {
     		$settings['HostConfig']['Binds'] = [];
     		$settings['Volumes'] = [];

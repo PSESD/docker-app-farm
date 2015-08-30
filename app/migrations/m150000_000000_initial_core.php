@@ -20,7 +20,7 @@ class m150000_000000_initial_core extends \canis\db\Migration
             'id' => 'char(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY',
             'application_id' => 'char(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL',
             'name' => 'string DEFAULT NULL',
-            'data' => 'blob DEFAULT NULL',
+            'data' => 'longblob DEFAULT NULL',
             'active' => 'bool NOT NULL DEFAULT 0',
             'initialized' => 'bool NOT NULL DEFAULT 0',
             'checked' => 'datetime DEFAULT NULL',

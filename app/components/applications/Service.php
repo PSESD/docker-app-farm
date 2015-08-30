@@ -53,6 +53,11 @@ abstract class Service extends \canis\base\Component
 		return null;
 	}
 
+	public function getVolumesFrom()
+	{
+		return null;
+	}
+
 	public function getPorts()
 	{
 		return null;

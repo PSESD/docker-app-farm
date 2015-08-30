@@ -10,5 +10,5 @@ if [ -e "latest.tar.gz" ]; then
 fi
 
 if [ -e "/var/www/web/wp-load.php" ]; then
-	echo "\n\n\n----INSTALL_SUCCESS----\n\n\n";
+	echo "\n\n\n----WORDPRESS_INSTALL_SUCCESS----\n\n\n"
 fi
