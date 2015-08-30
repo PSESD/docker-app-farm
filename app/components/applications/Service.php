@@ -46,6 +46,22 @@ abstract class Service extends \canis\base\Component
 
 	public function afterCreate($serviceInstance)
 	{
+
+		$self = $this;
+		$meta = $serviceInstance->meta;
+		$commandTasks = [];
+		$transferPath = $serviceInstance->applicationInstance->prefix . DIRECTORY_SEPARATOR . $serviceInstance->serviceId;
+		$commandTasks['prepare_transfer'] = [
+			'description' => 'Preparing transfer storage',
+			'cmd' => 'curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/prepare_transfer.sh | /bin/bash -s ',
+			'test' => '----TRANSFER_PREPARE_SUCCESS----'
+		];
+
+		foreach ($commandTasks as $id => $command) {
+			if(!$this->runCommand($serviceInstance, $command)) {
+				return false;
+			}
+		}
 		return true;
 	}
 
@@ -93,6 +109,30 @@ abstract class Service extends \canis\base\Component
 	{
 		$env = $this->getBaseEnvironment($instance);
 		return $env;
+	}
+
+	public function runCommand($serviceInstance, $command)
+	{
+		$self = $this;
+		$obfuscate = [];
+		if (!empty($command['obfuscate'])) {
+			$obfuscate = $command['obfuscate'];
+		}
+		$response = $serviceInstance->execCommand($command['cmd'], false, $obfuscate);
+		$responseBody = $response->getBody()->__toString();
+		$responseTest = strpos($responseBody, $command['test']) === false;
+		$responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
+
+        foreach ($obfuscate as $o) {
+            $responseBody = str_replace($o, str_repeat('*', strlen($o)), $responseBody);
+        }
+		if ($responseTest) {
+			$serviceInstance->applicationInstance->statusLog->addError('Command: ' . $command['description'] . ' failed', ['data' => $responseBody]);
+			return false;
+		}  else {
+			$serviceInstance->applicationInstance->statusLog->addInfo('Command: ' . $command['description'] . ' succeeded', ['data' => $responseBody]);
+		}
+		return true;
 	}
 }
 ?>

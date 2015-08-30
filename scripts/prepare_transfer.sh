@@ -7,3 +7,7 @@ if [ ! -d $STORAGE_DIR ]; then
 fi
 chmod -R 0755 $STORAGE_DIR
 chown -R www-data $STORAGE_DIR
+
+if [ -d $STORAGE_DIR ]; then
+	echo "----TRANSFER_PREPARE_SUCCESS----"
+fi

@@ -147,27 +147,10 @@ class WebService extends \canis\appFarm\components\applications\Service
 		}
 
 		foreach ($commandTasks as $id => $command) {
-			$obfuscate = [];
-			if (!empty($command['obfuscate'])) {
-				$obfuscate = $command['obfuscate'];
-			}
-			$response = $serviceInstance->execCommand($command['cmd'], false, $obfuscate);
-			$responseBody = $response->getBody()->__toString();
-			$responseTest = strpos($responseBody, $command['test']) === false;
-			$responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
-
-            foreach ($obfuscate as $o) {
-                $responseBody = str_replace($o, str_repeat('*', strlen($o)), $responseBody);
-            }
-			if ($responseTest) {
-				$serviceInstance->applicationInstance->statusLog->addError('Command: ' . $command['description'] . ' failed', ['data' => $responseBody]);
+			if(!$this->runCommand($serviceInstance, $command)) {
 				return false;
-			}  else {
-				$serviceInstance->applicationInstance->statusLog->addInfo('Command: ' . $command['description'] . ' succeeded', ['data' => $responseBody]);
 			}
 		}
-
-
 		return true;
 	}
 }

@@ -17,5 +17,9 @@ abstract class StorageService extends Service
 	{
 		return 'busybox';
 	}
+	public function afterCreate($serviceInstance)
+	{
+		return true;
+	}
 }
 ?>
