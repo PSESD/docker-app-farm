@@ -58,11 +58,11 @@ class WebService extends \canis\appFarm\components\applications\Service
 	public function generateMeta($serviceInstance)
 	{
 		$meta = [];
-		$meta['url'] = 'http://' . $serviceInstance->attributes['hostname'];
-		$meta['title'] = $serviceInstance->attributes['title'];
+		$meta['url'] = 'http://' . $serviceInstance->applicationInstance->attributes['hostname'];
+		$meta['title'] = $serviceInstance->applicationInstance->attributes['title'];
 		$meta['adminUser'] = 'farm' . rand(100,999);
 		$meta['adminPassword'] = substr(hash('sha512',rand()),0,12);
-		$meta['adminEmail'] = $serviceInstance->attributes['adminEmail'];
+		$meta['adminEmail'] = $serviceInstance->applicationInstance->attributes['adminEmail'];
 		return $meta;
 	}
 

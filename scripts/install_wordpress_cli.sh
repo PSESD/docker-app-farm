@@ -10,7 +10,7 @@ if [ ! -d "/var/www/web" ]; then
 fi
 
 chown www-data -R /var/www
-
+cd /var/www/client
 
 echo "Downloading wp-cli.phar..."
 if [ -d "/var/www/client/wp-cli.phar" ]; then
