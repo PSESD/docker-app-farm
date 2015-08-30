@@ -74,7 +74,7 @@ class WebService extends \canis\appFarm\components\applications\Service
 			$serviceInstance->applicationInstance->statusLog->addInfo('Installation of WordPress succeeded', ['data' => $installWordPressResponse]);
 		}
 
-		// Primary WordPress Install
+		// WordPress CLI Install
 		$response = $serviceInstance->execCommand([
 			"/bin/bash", "-c", "curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/install_wordpress_cli.sh | /bin/bash"
 		]);
