@@ -65,7 +65,13 @@ class Manager extends \canis\base\Component
 		if ($missingContainers === null) {
 			$missingContainers = [];
 			$required = ['proxy' => ['jwilder/nginx-proxy', 'codekitchen/dinghy-http-proxy']];
-			$allContainers = $this->docker->getContainerManager()->findAll();
+			$allContainers = $this->docker->getContainerManager()->findAll(['all' => 1]);
+			$hasStorageContainer = false;
+			foreach ($allContainers as $container) {
+				if ($container->getName() === DOCKER_TRANSFER_CONTAINER) {
+
+				}
+			}
 			foreach ($required as $containerSetId => $containers) {
 				if (!is_array($containers)) {
 					$containers = [$containers];

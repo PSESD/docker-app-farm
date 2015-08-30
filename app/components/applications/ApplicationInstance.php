@@ -190,6 +190,9 @@ class ApplicationInstance extends \canis\base\Component
     	$running = [];
     	$stopped = [];
     	foreach ($this->_services as $id => $serviceInstance) {
+        	if (!$serviceInstance->service->daemon) {
+        		continue;
+        	}
     		if ($serviceInstance->isRunning()) {
     			$running[] = $id;
     		} else {
@@ -261,6 +264,9 @@ class ApplicationInstance extends \canis\base\Component
         	if (!($serviceInstance = $self->getServiceInstance($serviceId))) {
         		return false;
         	}
+        	if (!$serviceInstance->service->daemon) {
+        		return true;
+        	}
         	if (!empty($serviceInstance->service->links)) {
 	        	foreach ($serviceInstance->service->links as $linkedServiceId) {
         			if (!$startService($linkedServiceId)) {
@@ -274,7 +280,7 @@ class ApplicationInstance extends \canis\base\Component
         		$self->statusLog->addInfo('Service \''. $serviceId .'\' has been started');
         		return true;
         	}
-        		$self->statusLog->addInfo('Unable to start service  \''. $serviceId .'\'');
+        	$self->statusLog->addError('Unable to start service  \''. $serviceId .'\'');
         	return false;
         };
 
@@ -349,7 +355,7 @@ class ApplicationInstance extends \canis\base\Component
 				'label' => 'Terminate'
 			],
 			'available' => function($self) {
-				return in_array($self->realStatus , ['stopped', 'failed']);
+				return in_array($self->realStatus, ['stopped', 'failed']);
 			},
 			'handler' => \canis\appFarm\components\applications\actions\Terminate::className()
 		];
@@ -457,6 +463,7 @@ class ApplicationInstance extends \canis\base\Component
 		$p['initialized'] = $this->model->initialized;
 		$p['name'] = $this->model->name;
 		$p['status'] = $this->realStatus;
+		$p['initStatus'] = $this->status;
 		$p['appStatus'] = $this->applicationStatus;
 		$p['prefix'] = $this->prefix;
 		$p['attributes'] = $this->attributes;
@@ -465,6 +472,9 @@ class ApplicationInstance extends \canis\base\Component
 		if (!empty($this->_services)) {
 			$p['services'] = [];
 			foreach ($this->_services as $id => $serviceInstance) {
+	        	if (!$serviceInstance->service->daemon) {
+	        		continue;
+	        	}
 				$p['services'][$id] = $serviceInstance->getPackage();
 			}
 		}

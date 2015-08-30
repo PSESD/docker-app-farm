@@ -21,8 +21,10 @@ class ServiceInstance extends \canis\base\Component
     public $containerName = false;
 
     protected $meta = false;
-	protected $initializing = false;
-	protected $linkedContainerIds = [];
+    protected $initialized = false;
+    protected $initializing = false;
+    protected $linkedContainerIds = [];
+    protected $volumesFromIds = [];
 	protected $container;
 
 	public function __wakeup()
@@ -84,8 +86,8 @@ class ServiceInstance extends \canis\base\Component
     	if (($priviledged = $this->service->priviledged) && !empty($priviledged)) {
     		$settings['HostConfig']['Privileged'] = $priviledged;
     	}
-    	if (($volumesFrom = $this->service->volumesFrom) && !empty($volumesFrom)) {
-    		$settings['HostConfig']['VolumesFrom'] = $volumesFrom;
+    	if (($volumesFrom = $this->volumesFromIds) && !empty($volumesFrom)) {
+    		$settings['HostConfig']['VolumesFrom'] = $this->volumesFromIds;
     	}
     	if (($binds = $this->service->volumes) && !empty($binds)) {
     		$settings['HostConfig']['Binds'] = [];
@@ -120,7 +122,10 @@ class ServiceInstance extends \canis\base\Component
     	}
     	return $settings;
     }
-
+    public function getContainerName()
+    {
+        return $this->applicationInstance->prefix .'-'. $this->serviceId;
+    }
     public function getContainer()
     {
     	if ($this->container) {
@@ -135,7 +140,7 @@ class ServiceInstance extends \canis\base\Component
     	}
     	$this->initializing = true;
     	$this->applicationInstance->statusLog->addInfo('Creating container for \''. $this->serviceId .'\'');
-		$this->containerName = $this->applicationInstance->prefix .'-'. $this->serviceId;
+		$this->containerName = $this->getContainerName();
 		if (!empty($this->service->links)) {
 			foreach ($this->service->links as $linkedService) {
 	    		if (!($service = $this->applicationInstance->getServiceInstance($linkedService))) {	
@@ -150,6 +155,17 @@ class ServiceInstance extends \canis\base\Component
 	    		$this->linkedContainerIds[] = $container->getId() .':'. $linkedService;
 			}
 		}
+        if (!empty($this->service->volumesFrom)) {
+            foreach ($this->service->volumesFrom as $volumesFromService) {
+                if (!($serviceInstance = $this->applicationInstance->getServiceInstance($volumesFromService))) { 
+                    $this->applicationInstance->statusLog->addError('Invalid linked service for \''. $this->serviceId .'\' to \''. $volumesFromService .'\'');
+                    return false;
+                }
+                $this->volumesFromIds[] = $serviceInstance->getContainerName();
+            }
+        }
+        $this->volumesFromIds[] = DOCKER_TRANSFER_CONTAINER;
+        
 		$containerSettings = $this->containerSettings;
 		$this->applicationInstance->statusLog->addInfo('Setting up container for service \''. $this->serviceId .'\'', ['settings' => $containerSettings]);
 		$container = new \Docker\Container($containerSettings);
@@ -168,7 +184,8 @@ class ServiceInstance extends \canis\base\Component
 		}
 		$this->containerId = $container->getId();
 		$this->container = $container;
-		$this->initializing = false;
+        $this->initializing = false;
+        $this->initialized = true;
 		return $container;
     }
 
@@ -221,6 +238,9 @@ class ServiceInstance extends \canis\base\Component
 
     public function getStateInfo()
     {
+        if (!$this->initialized) {
+            return false;
+        }
     	try {
     		if (!($container = $this->getContainer())) {
     			return 'no_container';

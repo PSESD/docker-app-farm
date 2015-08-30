@@ -41,17 +41,17 @@ class WebService extends \canis\appFarm\components\applications\Service
 		return ['80'];
 	}
 
-	public function getVolumes()
-	{
-		return [
-			'/var/www'
-		];
-	}
-
 	public function getLinks()
 	{
 		return [
 			'db'
+		];
+	}
+
+	public function getVolumesFrom()
+	{
+		return [
+			'webStorage'
 		];
 	}
 

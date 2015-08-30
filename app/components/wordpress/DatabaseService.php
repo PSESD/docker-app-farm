@@ -34,5 +34,11 @@ class DatabaseService extends \canis\appFarm\components\applications\Service
 	{
 		return 'always';
 	}
+	public function getVolumesFrom()
+	{
+		return [
+			'dbStorage'
+		];
+	}
 }
 ?>

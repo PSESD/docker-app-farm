@@ -12,6 +12,7 @@ use Yii;
 
 abstract class Service extends \canis\base\Component
 {
+	public $daemon = true;
 	public $instance;
 	public function __sleep()
     {

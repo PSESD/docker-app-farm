@@ -22,4 +22,14 @@ defined('CANIS_APP_DATABASE_DBNAME')		|| define('CANIS_APP_DATABASE_DBNAME', 'ap
 defined('CANIS_APP_REDIS_HOST')			|| define('CANIS_APP_REDIS_HOST', '');
 defined('CANIS_APP_REDIS_PORT')		|| define('CANIS_APP_REDIS_PORT', 6379);
 defined('CANIS_APP_REDIS_DATABASE')		|| define('CANIS_APP_REDIS_DATABASE', 0);
+
+
+if (file_exists('docker_host_env.php')) {
+	require 'docker_host_env.php';
+}
+defined('DOCKER_HOST')			|| define('DOCKER_HOST', 'tcp://172.17.42.1:2376');
+defined('DOCKER_TLS_VERIFY') 	|| define('DOCKER_TLS_VERIFY', 1);
+defined('DOCKER_CERT_PATH') 	|| define('DOCKER_CERT_PATH', '/var/www/certs/docker-cert.pem');
+defined('DOCKER_CA_CERT_PATH') 	|| define('DOCKER_CA_CERT_PATH', '/var/www/certs/ca.pem');
+defined('DOCKER_PEER_NAME') 	|| define('DOCKER_PEER_NAME', 'boot2docker');
 ?>

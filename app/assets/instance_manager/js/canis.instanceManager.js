@@ -81,7 +81,7 @@ CanisInstanceManager.prototype.scheduleRefresh = function() {
 	}
 	this.scheduledRefresh = setTimeout(function() {
 		_this._refresh();
-	}, 15000);
+	}, 5000);
 };
 
 CanisInstanceManager.prototype._refresh = function() {

@@ -15,6 +15,12 @@ class Recipe extends \canis\appFarm\components\applications\Recipe
 	public function getServiceConfig()
 	{
 		$services = [];
+		$services['webStorage'] = [];
+		$services['webStorage']['class'] = WebStorageService::className();
+
+		$services['dbStorage'] = [];
+		$services['dbStorage']['class'] = DatabaseStorageService::className();
+
 		$services['web'] = [];
 		$services['web']['class'] = WebService::className();
 

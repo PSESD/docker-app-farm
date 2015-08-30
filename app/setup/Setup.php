@@ -18,7 +18,7 @@ class Setup extends \canis\setup\Setup
 	{
 		$tasks = [];
 		$tasks[] = [
-			'class' => \canis\setup\tasks\Environment::className()
+			'class' => tasks\Environment::className()
 		];
 		$tasks[] = [
 			'class' => \canis\setup\tasks\Database::className()
