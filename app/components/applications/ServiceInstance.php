@@ -165,7 +165,7 @@ class ServiceInstance extends \canis\base\Component
             }
         }
         $this->volumesFromIds[] = DOCKER_TRANSFER_CONTAINER;
-        
+
 		$containerSettings = $this->containerSettings;
 		$this->applicationInstance->statusLog->addInfo('Setting up container for service \''. $this->serviceId .'\'', ['settings' => $containerSettings]);
 		$container = new \Docker\Container($containerSettings);
@@ -325,7 +325,7 @@ class ServiceInstance extends \canis\base\Component
         foreach ($obfuscate as $o) {
             $loggedCommand = str_replace($o, str_repeat('*', strlen($o)), $loggedCommand);
         }
-    	$this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $loggedCommand]);
+    	// $this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $loggedCommand]);
 		try {
             $command = ['/bin/bash', '-c', $command . " 2>&1 | sed 's/^/ /'"];
 			$execute = Yii::$app->docker->docker->getContainerManager()->exec($this->container, $command);
@@ -339,7 +339,7 @@ class ServiceInstance extends \canis\base\Component
             foreach ($obfuscate as $o) {
                 $error = str_replace($o, str_repeat('*', strlen($o)), $error);
             }
-			$this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $error, 'command' => $loggedCommand, 'usedCallback' => $callback !== false]);
+			// $this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $error, 'command' => $loggedCommand, 'usedCallback' => $callback !== false]);
 		    return false;
 		}
     }

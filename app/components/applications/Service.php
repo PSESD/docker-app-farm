@@ -50,10 +50,10 @@ abstract class Service extends \canis\base\Component
 		$self = $this;
 		$meta = $serviceInstance->meta;
 		$commandTasks = [];
-		$transferPath = $serviceInstance->applicationInstance->prefix . DIRECTORY_SEPARATOR . $serviceInstance->serviceId;
+		$transferPath = $serviceInstance->containerName;
 		$commandTasks['prepare_transfer'] = [
 			'description' => 'Preparing transfer storage',
-			'cmd' => 'curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/prepare_transfer.sh | /bin/bash -s ',
+			'cmd' => 'curl -sS https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/prepare_transfer.sh | /bin/bash -s ' . $transferPath,
 			'test' => '----TRANSFER_PREPARE_SUCCESS----'
 		];
 
@@ -127,10 +127,10 @@ abstract class Service extends \canis\base\Component
             $responseBody = str_replace($o, str_repeat('*', strlen($o)), $responseBody);
         }
 		if ($responseTest) {
-			$serviceInstance->applicationInstance->statusLog->addError('Command: ' . $command['description'] . ' failed', ['data' => $responseBody]);
+			$serviceInstance->applicationInstance->statusLog->addError('Command FAILED on \''. $serviceInstance->serviceId .'\': ' . $command['description'] . '', ['data' => $responseBody]);
 			return false;
 		}  else {
-			$serviceInstance->applicationInstance->statusLog->addInfo('Command: ' . $command['description'] . ' succeeded', ['data' => $responseBody]);
+			$serviceInstance->applicationInstance->statusLog->addInfo('Command SUCCESS on \''. $serviceInstance->serviceId .'\': ' . $command['description'] . '', ['data' => $responseBody]);
 		}
 		return true;
 	}
