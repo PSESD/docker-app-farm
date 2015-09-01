@@ -1,5 +1,6 @@
 <?php
 use yii\helpers\Html;
+$this->title = 'Create Instance';
 echo Html::beginForm('', 'post', ['class' => 'ajax']);
 echo Html::beginTag('div', ['class' => 'form']);
 //echo Html::activeHiddenInput($model, 'application_id');
@@ -11,7 +12,8 @@ echo Html::endTag('div');
 $baseDataId = Html::getInputId($model, 'data');
 $baseDataName = Html::getInputName($model, 'data');
 foreach ($application->object->setupFields as $id => $field) {
-	$value = isset($model->data->settings[$id]) ? $model->data->settings[$id] : '';
+	if ($backup && !empty($field['hideRestore'])) { continue; }
+	$value = isset($model->dataObject->attributes[$id]) ? $model->dataObject->attributes[$id] : '';
 	$fieldId = $baseDataId . '_' . $id;
 	$fieldName = $baseDataName . '[' . $id .']';
 	echo Html::beginTag('div', ['class' => 'form-group']);

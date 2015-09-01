@@ -13,64 +13,11 @@ use yii\web\NotFoundHttpException;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use canis\appFarm\models\Instance;
+use canis\appFarm\models\Backup;
 use canis\appFarm\components\applications\ApplicationInstance;
 
-class InstanceController extends \canis\appFarm\components\web\Controller
+class InstanceController extends Controller
 {
-	/**
-     * @inheritdoc
-     */
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'rules' => [
-                    [
-                        'actions' => ['error'],
-                        'allow' => true
-                    ],
-                    [
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                    [
-                        'allow' => false,
-                        'roles' => ['?'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'refresh' => ['post'],
-                ],
-            ],
-        ];
-    }
-    /**
-     * @inheritdoc
-     */
-    public function actions()
-    {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-        ];
-    }
-    public function beforeAction($action)
-    {
-        if (!parent::beforeAction($action)) {
-            return false;
-        }
-        if (!Yii::$app->user->isGuest && !Yii::$app->docker->isConnected) {
-            throw new \canis\appFarm\components\exceptions\DockerException("Could not connect to docker daemon. Verify configuration.");
-            return false;
-        }
-        return true;
-    }
-
 	public function actionIndex()
     {
         Yii::$app->response->view = 'index';
@@ -78,14 +25,23 @@ class InstanceController extends \canis\appFarm\components\web\Controller
 
     public function actionCreate()
     {
+        $backup = false;
         if (empty($_GET['application_id']) || !($application = Yii::$app->collectors['applications']->getByPk($_GET['application_id']))) {
             throw new NotFoundHttpException("Application not found");
         }
+        if (!empty($_GET['from']) && !($backup = Backup::get($_GET['from']))) {
+            throw new NotFoundHttpException("Backup not found");
+        }
         $this->params['application'] = $application;
         $this->params['model'] = new Instance;
+        $this->params['backup'] = $backup;
         $this->params['model']->application_id = $application->applicationObject->primaryKey;
         $this->params['applicationInstance'] = $this->params['model']->dataObject = new ApplicationInstance;
-
+        if ($backup) {
+            $this->params['model']->name = $backup->dataObject->data['applicationInstance']['name'] .' (copy)';
+            $this->params['applicationInstance']->attributes = $backup->dataObject->data['applicationInstance']['attributes'];
+            $this->params['applicationInstance']->restoreBackupId = $backup->id;
+        }
         if (!empty($_POST)) {
             $data = false;
             if (isset($_POST['Instance']['data'])) {
@@ -133,11 +89,11 @@ class InstanceController extends \canis\appFarm\components\web\Controller
 
     public function actionAction()
     {
-        if (empty($_POST['id']) || !($instance = Instance::get($_POST['id']))) {
+        if (empty($_GET['id']) || !($instance = Instance::get($_GET['id']))) {
             throw new HttpException(404, 'Instance could not be found');
         }
         Yii::$app->response->task = 'trigger';
-        $instance->dataObject->handleAction($_POST['action']);
+        $instance->dataObject->handleAction($_GET['action']);
     }
     
     /**

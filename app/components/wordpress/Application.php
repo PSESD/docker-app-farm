@@ -17,24 +17,37 @@ class Application extends \canis\appFarm\components\applications\Application
 		parent::init();
 	}
 
+	public function getVersion()
+	{
+		return 1;
+	}
+
 	public function setupFields()
 	{
 		$fields = [];
 		$fields['title'] = [
 			'label' => 'Site Title',
-			'type' => 'text'
+			'type' => 'text',
+			'hideRestore' => true,
+			'required' => true
 		];
 		$fields['initialUsername'] = [
 			'label' => 'Initial User Username',
-			'type' => 'text'
+			'type' => 'text',
+			'hideRestore' => true,
+			'required' => true
 		];
 		$fields['initialPassword'] = [
 			'label' => 'Initial User Password',
-			'type' => 'text'
+			'type' => 'text',
+			'hideRestore' => true,
+			'required' => true
 		];
 		$fields['adminEmail'] = [
 			'label' => 'Admin Email',
-			'type' => 'text'
+			'type' => 'text',
+			'hideRestore' => true,
+			'required' => true
 		];
 		return $fields;
 	}
@@ -45,10 +58,44 @@ class Application extends \canis\appFarm\components\applications\Application
 		return new $recipeClass;
 	}
 
-	public function actions($instance)
+	public function webActions($instance)
+	{
+		$actions = [];
+		if ($instance->realStatus === 'running') {
+			$actions['visitSite'] = [
+				'options' => [
+					'label' => 'Visit',
+					'icon' => 'fa fa-home',
+					'url' => 'http://' . $instance->primaryHostname,
+					'attributes' => ['target' => '_blank']
+				]
+			];
+			$actions['visitDashboard'] = [
+				'options' => [
+					'label' => 'Dashboard',
+					'icon' => 'fa fa-tachometer',
+					'url' => 'http://' . $instance->primaryHostname .'/wp-admin',
+					'attributes' => ['target' => '_blank']
+				]
+			];
+		}
+		return $actions;
+	}
+
+	public function instanceActions($instance)
 	{
 		$actions = [];
 		return $actions;
 	}
+
+    public function getBackupTaskClass()
+    {
+        return tasks\BackupTask::className();
+    }
+
+    public function getRestoreTaskClass()
+    {
+        return tasks\RestoreTask::className();
+    }
 }
 ?>

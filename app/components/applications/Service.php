@@ -38,7 +38,7 @@ abstract class Service extends \canis\base\Component
 		$serviceInstance['applicationInstance'] = $applicationInstance;
 		return $this->instance = Yii::createObject($serviceInstance);
 	}
-
+	
 	public function generateMeta($serviceInstance)
 	{
 		return [];
@@ -58,7 +58,7 @@ abstract class Service extends \canis\base\Component
 		];
 
 		foreach ($commandTasks as $id => $command) {
-			if(!$this->runCommand($serviceInstance, $command)) {
+			if(!$serviceInstance->runCommand($command)) {
 				return false;
 			}
 		}
@@ -95,6 +95,18 @@ abstract class Service extends \canis\base\Component
 		return null;
 	}
 
+	public function getDependencies()
+	{
+		$d = [];
+		if (!empty($this->links)) {
+			$d = array_merge($d, $this->links);
+		}
+		if (!empty($this->volumesFrom)) {
+			$d = array_merge($d, $this->volumesFrom);
+		}
+		return array_unique($d);
+	}
+
 	public function getPriviledged()
 	{
 		return null;
@@ -108,31 +120,8 @@ abstract class Service extends \canis\base\Component
 	final public function getEnvironment($instance)
 	{
 		$env = $this->getBaseEnvironment($instance);
+		$env['TRANSFER_PATH'] = $instance->transferPath;
 		return $env;
-	}
-
-	public function runCommand($serviceInstance, $command)
-	{
-		$self = $this;
-		$obfuscate = [];
-		if (!empty($command['obfuscate'])) {
-			$obfuscate = $command['obfuscate'];
-		}
-		$response = $serviceInstance->execCommand($command['cmd'], false, $obfuscate);
-		$responseBody = $response->getBody()->__toString();
-		$responseTest = strpos($responseBody, $command['test']) === false;
-		$responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
-
-        foreach ($obfuscate as $o) {
-            $responseBody = str_replace($o, str_repeat('*', strlen($o)), $responseBody);
-        }
-		if ($responseTest) {
-			$serviceInstance->applicationInstance->statusLog->addError('Command FAILED on \''. $serviceInstance->serviceId .'\': ' . $command['description'] . '', ['data' => $responseBody]);
-			return false;
-		}  else {
-			$serviceInstance->applicationInstance->statusLog->addInfo('Command SUCCESS on \''. $serviceInstance->serviceId .'\': ' . $command['description'] . '', ['data' => $responseBody]);
-		}
-		return true;
 	}
 }
 ?>

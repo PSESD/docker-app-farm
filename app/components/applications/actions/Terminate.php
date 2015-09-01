@@ -14,9 +14,15 @@ class Terminate extends Action
             $this->result->message = 'Instance could not be found!';
             return false;
         }
-        if (!$instance->dataObject->terminate()) {
-        	$this->result->isSuccess = false;
-            $this->result->message = 'Instance could not be terminated';
+        try {
+            if (!$instance->dataObject->terminate()) {
+                $this->result->isSuccess = false;
+                $this->result->message = 'Instance could not be terminated';
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->result->isSuccess = false;
+            $this->result->message = 'Instance could not be terminated: ' . $e->__toString();
             return false;
         }
 
@@ -44,6 +50,11 @@ class Terminate extends Action
     public function requiredConfigParams()
     {
         return array_merge(parent::requiredConfigParams(), ['instanceId']);
+    }
+    
+    public static function confirm()
+    {
+        return true;
     }
 }
 ?>

@@ -29,9 +29,11 @@ abstract class Application extends \canis\base\Component implements \canis\base\
     	];
     }
 
+    abstract public function getVersion();
     abstract public function setupFields();
     abstract public function getRecipe();
-    abstract public function actions($instance);
+    abstract public function instanceActions($instance);
+    abstract public function webActions($instance);
 
     final public function baseFields()
     {
@@ -52,6 +54,42 @@ abstract class Application extends \canis\base\Component implements \canis\base\
     public function initialize()
     {
 
+    }
+
+    public function hasBackupTask()
+    {
+        return $this->backupTaskClass !== false;
+    }
+
+    public function hasRestoreTask()
+    {
+        return $this->restoreTaskClass !== false;
+    }
+
+    public function getBackupTaskClass()
+    {
+        return false;
+    }
+
+    public function getRestoreTaskClass()
+    {
+        return false;
+    }
+
+    public function getBackupTask($applicationInstance)
+    {
+        if (!$this->backupTaskClass) {
+            return false;
+        }
+        return Yii::createObject(['class' => $this->backupTaskClass, 'applicationInstance' => $applicationInstance]);
+    }
+
+    public function getRestoreTask($applicationInstance)
+    {
+        if (!$this->restoreTaskClass) {
+            return false;
+        }
+        return Yii::createObject(['class' => $this->restoreTaskClass, 'applicationInstance' => $applicationInstance]);
     }
 }
 ?>

@@ -10,6 +10,7 @@ namespace canis\appFarm\components\applications;
 
 use Yii;
 use Docker\Port;
+use yii\helpers\FileHelper;
 use Docker\PortCollection;
 
 class ServiceInstance extends \canis\base\Component
@@ -42,6 +43,17 @@ class ServiceInstance extends \canis\base\Component
             }
         }
         return $keys;
+    }
+
+    public function backupRestorePrep($backup)
+    {
+        if (!$backup) {
+            return true;
+        }
+
+        if (isset($backup->dataObject->data['applicationInstance']['services'][$this->serviceId]['meta'])) {
+            $this->meta = $backup->dataObject->data['applicationInstance']['services'][$this->serviceId]['meta'];
+        }
     }
 
     public function check()
@@ -122,10 +134,17 @@ class ServiceInstance extends \canis\base\Component
     	}
     	return $settings;
     }
+
     public function getContainerName()
     {
         return $this->applicationInstance->prefix .'-'. $this->serviceId;
     }
+
+    public function getTransferPath()
+    {
+        return $this->applicationInstance->getParentTransferPath() . DIRECTORY_SEPARATOR . $this->containerName;
+    }
+
     public function getContainer()
     {
     	if ($this->container) {
@@ -243,7 +262,7 @@ class ServiceInstance extends \canis\base\Component
         }
     	try {
     		if (!($container = $this->getContainer())) {
-    			return 'no_container';
+    			return false;
     		}
     		$container->setRuntimeInformations([]);
     		Yii::$app->docker->docker->getContainerManager()->inspect($container);
@@ -253,24 +272,49 @@ class ServiceInstance extends \canis\base\Component
     		}
     		return false;
 		} catch (\Exception $e) {
-			return 'exception';
+			return false;
 		}
-		return 'other';
+		return false;
     }
 
-    public function terminate()
+    public function containerExists()
     {
-    	if (!$this->getContainer()) {
+        if (!$this->getContainer()) {
+            return false;
+        }
+
+        if (!$this->stateInfo) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function terminate($quietFail = false)
+    {
+    	if (!$this->containerExists()) {
     		return true;
     	}
-    	if ($this->isStarted()) {
-    		$this->stop();
-    	}
+        $tries = 10;
+        while ($tries > 0 && $this->isStarted()) {
+            $tries--;
+            $this->stop();
+            sleep(5);
+        }
+        if ($this->isStarted()) {
+            if (!$quietFail) {
+                $this->applicationInstance->statusLog->addError('Unable to stop \''. $this->serviceId .'\' before termination');
+            }
+            return false;
+        }
     	$this->applicationInstance->statusLog->addInfo('Terminating container for service \''. $this->serviceId .'\'');
 		try {
 			Yii::$app->docker->docker->getContainerManager()->remove($this->container, true);
+            FileHelper::removeDirectory($this->transferPath);
 		} catch (\Exception $e) {
-			$this->applicationInstance->statusLog->addError('Unable to terminate container for \''. $this->serviceId .'\'', ['error' => $e->__toString()]);
+            if (!$quietFail) {
+			     $this->applicationInstance->statusLog->addError('Unable to terminate container for \''. $this->serviceId .'\'', ['error' => $e->__toString()]);
+            }
 		    return false;
 		}
 		return true;
@@ -278,7 +322,7 @@ class ServiceInstance extends \canis\base\Component
 
     public function start()
     {
-    	if (!$this->getContainer()) {
+    	if (!$this->containerExists()) {
     		return false;
     	}
     	$this->applicationInstance->statusLog->addInfo('Starting container for service \''. $this->serviceId .'\'');
@@ -298,7 +342,7 @@ class ServiceInstance extends \canis\base\Component
 
     public function stop()
     {
-    	if (!$this->getContainer()) {
+    	if (!$this->containerExists()) {
     		return false;
     	}
     	$this->applicationInstance->statusLog->addInfo('Stopping container for service \''. $this->serviceId .'\'');
@@ -316,9 +360,51 @@ class ServiceInstance extends \canis\base\Component
 		return true;
     }
 
+    public function runCommand($command, $statusLog = null)
+    {
+        if ($statusLog === null) {
+            $statusLog = $this->applicationInstance->statusLog;
+        }
+        $self = $this;
+        $obfuscate = [];
+        if (!empty($command['obfuscate'])) {
+            $obfuscate = $command['obfuscate'];
+        }
+        if (empty($command['test'])) {
+            $command['test'] = false;
+        }
+
+        if (empty($command['description'])) {
+            $command['description'] = substr($command['cmd'], 0, 25) .'...';
+        }
+        $safeCommand = $command['cmd'];
+        foreach ($obfuscate as $o) {
+            $safeCommand = str_replace($o, str_repeat('*', strlen($o)), $safeCommand);
+        }
+
+        $response = $this->execCommand($command['cmd'], false, $obfuscate);
+        if (!$response) {
+            $statusLog->addError('Command FAILED on \''. $this->serviceId .'\': ' . $command['description'] . '', ['command' => $safeCommand]);
+            return false;
+        }
+        $responseBody = $response->getBody()->__toString();
+        $responseTest = $command['test'] !== false && strpos($responseBody, $command['test']) === false;
+        $responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
+        foreach ($obfuscate as $o) {
+            $responseBody = str_replace($o, str_repeat('*', strlen($o)), $responseBody);
+        }
+        if ($responseTest) {
+            $statusLog->addError('Command FAILED on \''. $this->serviceId .'\': ' . $command['description'] . '', ['command' => $safeCommand, 'data' => $responseBody]);
+            return false;
+        }  else {
+            $statusLog->addInfo('Command SUCCESS on \''. $this->serviceId .'\': ' . $command['description'] . '', ['command' => $safeCommand, 'data' => $responseBody]);
+        }
+        return true;
+    }
+
     public function execCommand($command, $callback = false, $obfuscate = [])
     {
-    	if (!$this->getContainer()) {
+    	if (!$this->containerExists()) {
     		return false;
     	}
         $loggedCommand = $command;

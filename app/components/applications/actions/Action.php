@@ -14,5 +14,12 @@ class Action extends \canis\deferred\components\Action
     {
         return false;
     }
+    public static function handleInput(&$config)
+    {
+    }
+    public static function confirm()
+    {
+        return false;
+    }
 }
 ?>

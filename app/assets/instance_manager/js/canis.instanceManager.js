@@ -110,7 +110,7 @@ CanisInstance.prototype.sendAction = function(action) {
 	var _this = this;
 	_this.startPendingAction(action.label);
 	var ajaxSettings = {};
-	ajaxSettings.type = 'POST';
+	ajaxSettings.type = 'GET';
 	ajaxSettings.data = {
 		'id': this.instance.id,
 		'action': action.id
@@ -159,12 +159,12 @@ CanisInstance.prototype.setState = function(state) {
 
 CanisInstance.prototype.updateActions = function() {
 	var _this = this;
-	if (_.isEmpty(this.instance.actions)) {
+	if (_.isEmpty(this.instance.instanceActions)) {
 		this.elements.actions.$button.hide();
 	} else {
 		this.elements.actions.$button.show();
 		this.elements.actions.$menu.html('');
-		jQuery.each(this.instance.actions, function(id, action) {
+		jQuery.each(this.instance.instanceActions, function(id, action) {
 			action.id = id;
 			var $li = $('<li />').appendTo(_this.elements.actions.$menu);
 			var iconExtra = '';
@@ -172,6 +172,9 @@ CanisInstance.prototype.updateActions = function() {
 				iconExtra = '<span class="'+ action.icon +'"></span> ';
 			}
 			var $a = $('<a />', {'href': '#'}).html(iconExtra + action.label).appendTo($li);
+			if (action.attributes !== undefined) {
+				$a.attr(action.attributes);
+			} 
 			if (action.url !== undefined) {
 				$a.attr({'href': action.url});
 				if (action.background !== undefined && action.background) {

@@ -14,9 +14,16 @@ class Stop extends Action
             $this->result->message = 'Instance could not be found!';
             return false;
         }
-        if (!$instance->dataObject->stop()) {
-        	$this->result->isSuccess = false;
-            $this->result->message = 'Instance could not be stopped';
+
+        try {
+            if (!$instance->dataObject->stop()) {
+            	$this->result->isSuccess = false;
+                $this->result->message = 'Instance could not be stopped';
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->result->isSuccess = false;
+            $this->result->message = 'Instance could not be stopped: ' . $e->__toString();
             return false;
         }
 

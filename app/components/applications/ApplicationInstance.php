@@ -11,12 +11,14 @@ namespace canis\appFarm\components\applications;
 use Yii;
 use yii\helpers\Url;
 use canis\action\Status;
+use canis\appFarm\models\Backup as BackupModel;
 use canis\caching\Cacher;
 
 class ApplicationInstance extends \canis\base\Component
 {
 	const EVENT_HOSTNAME_CHANGE = '_hostnameChange';
 	public $model;
+    public $restoreBackupId = false;
 	public $status = 'uninitialized';
 
 	protected $_prefix;
@@ -54,23 +56,52 @@ class ApplicationInstance extends \canis\base\Component
     	return false;
     }
 
+    public function getServiceInstances()
+    {
+        return $this->_services;
+    }
+
+    public function isBackupRestore()
+    {
+        if ($this->canRestore() && !empty($this->restoreBackupId)) {
+            $backup = BackupModel::get($this->restoreBackupId);
+            if ($backup) {       
+                return true;
+            }
+        }
+        return false;
+    }
     public function handleAction($actionId, $config = false)
     {
-    	$actions = array_merge(static::actions(), $this->application->object->actions($this));
+    	$actions = array_merge(static::instanceActions(), $this->application->object->instanceActions($this));
     	if (!isset($actions[$actionId])) {
     		Yii::$app->response->error = 'Unable to find action \''. $actionId .'\'';
     		return true;
     	}
+        if (empty($config)) {
+            $config = [];
+        }
     	$action = $actions[$actionId];
-    	$actionHandler = $action['handler'];
-    	$setupFields = $actionHandler::setupFields();
+    	$actionHandler = Yii::$app->response->params['actionHandler'] = $action['handler'];
+        $setupFields = Yii::$app->response->params['setupFields'] = $actionHandler::setupFields();
+        if (isset($_POST['config']) && is_string($_POST['config'])) {
+            $config = unserialize($_POST['config']);
+        }
+        if (empty($config)) {
+            $config = [];
+        }
+        $actionHandler::handleInput($config);
+        Yii::$app->response->params['config'] = $config;
     	if (empty($setupFields) || !empty($config)) {
-    		if (empty($config)) {
-    			$config = [];
-    		}
-    		$config['instanceId'] = $this->model->id;
+    		Yii::$app->response->params['config']['instanceId'] = $this->model->id;
+            if ($actionHandler::confirm() && empty($_POST['confirm'])) {
+                Yii::$app->response->view = 'action_confirm';  
+                Yii::$app->response->taskOptions = ['title' => 'Confirm', 'isConfirmation' => true];
+                Yii::$app->response->task = 'dialog';
+                return true;
+            }
     		try {
-	    		if (!($deferredAction = $actionHandler::setup($config))) {
+	    		if (!($deferredAction = $actionHandler::setup(Yii::$app->response->params['config']))) {
 		    		Yii::$app->response->error = 'Unable to initiate deferred action \''. $actionId .'\'';
 		    		return true;
 	    		} else {
@@ -83,8 +114,7 @@ class ApplicationInstance extends \canis\base\Component
 	    		return true;
 	    	}
     	} else {
-    		
-			Yii::$app->response->view = 'setup_action';
+			Yii::$app->response->view = 'action_setup';
 			return false;
 		}
     }
@@ -93,6 +123,18 @@ class ApplicationInstance extends \canis\base\Component
     {
         if ($this->status !== 'starting') {
             return true;
+        }
+        $backup = false;
+        if ($this->restoreBackupId) {
+            if (!$this->canRestore()) {       
+                $this->statusLog->addError('No valid restore task for \''. $this->applicationId .'\'');
+                return false;
+            }
+            $backup = BackupModel::get($this->restoreBackupId);
+            if (!$backup) {       
+                $this->statusLog->addError('Could not load the backup ('.$this->restoreBackupId.') while restoring \''. $this->applicationId .'\'');
+                return false;
+            }
         }
         
         $applicationItem = $this->application;
@@ -108,7 +150,9 @@ class ApplicationInstance extends \canis\base\Component
         $this->statusLog->addInfo('Initiating service objects');
         foreach ($services as $id => $service) {
         	$this->_services[$id] = $service->createInstance($id, $this);
+            $this->_services[$id]->backupRestorePrep($backup);
         }
+
         $this->statusLog->addInfo('Checking service objects');
         foreach ($this->_services as $id => $service) {
         	if (!$service->check()) {
@@ -150,6 +194,11 @@ class ApplicationInstance extends \canis\base\Component
         	}
         }
 
+        if ($backup) {
+            $this->updateStatus('pre_restore');
+            $this->restore($backup);
+        }
+
         // verify application
         $this->updateStatus('verifying');
         $this->statusLog->addInfo('Verifying install');
@@ -160,23 +209,50 @@ class ApplicationInstance extends \canis\base\Component
 
     public function terminate()
     {
-    	$status = $this->applicationStatus;
-        $this->statusLog->addInfo('Terminating');
-    	// if ($status && $status !== 'stopped') {
-     //    	$this->statusLog->addError('Could not terminate due to application status ('. $status .')');
-    	// 	return false;
-    	// }
-        $this->updateStatus('terminating');
-        foreach ($this->_services as $id => $serviceInstance) {
-        	if (!$serviceInstance->terminate()) {
-        		$this->statusLog->addError('Could not terminate service \''. $id .'\'');
-        		return false;
-        	}
+        $self = $this;
+        $tries = 5;
+        $allTerminated = false;
+        if ($this->canBackup()) {
+            $this->statusLog->addInfo('Backing up instance before termination');
+            if (!$this->backup($this->statusLog, ['reason' => 'Terminating'])) {
+                $this->statusLog->addError('Termination failed because the backup failed');
+                return false;
+            }
         }
-        $this->model->terminated = date('Y-m-d H:i:s');
-        $this->model->active = 0;
-        $this->updateStatus('terminated');
-        return $this->model->save();
+        $this->statusLog->addInfo('Terminating all services');
+        $this->updateStatus('terminating');
+        while (!$allTerminated) {
+            $tries--;
+            $allTerminated = true;
+            foreach ($this->_services as $serviceId => $serviceInstance) {
+                if (!$serviceInstance->containerExists()) {
+                    continue;
+                }
+                if (!$serviceInstance->terminate(true)) {
+                    $allTerminated = false;
+                }
+            }
+        }
+        if (!$allTerminated) {
+            $allTerminated = true;
+            foreach ($this->_services as $serviceId => $serviceInstance) {
+                if (!$serviceInstance->containerExists()) {
+                    continue;
+                }
+                if (!$serviceInstance->terminate()) {
+                    $allTerminated = false;
+                }
+            }
+        }
+        if (!$allTerminated) {
+            $this->updateStatus('failed');
+        } else {
+            $this->model->terminated = gmdate('Y-m-d H:i:s');
+            $this->model->active = 0;
+            $this->updateStatus('terminated');
+            return $this->model->save();
+        }
+        return $allTerminated;
     }
 
     public function getApplicationStatus()
@@ -267,9 +343,9 @@ class ApplicationInstance extends \canis\base\Component
         	if (!$serviceInstance->service->daemon) {
         		return true;
         	}
-        	if (!empty($serviceInstance->service->links)) {
-	        	foreach ($serviceInstance->service->links as $linkedServiceId) {
-        			if (!$startService($linkedServiceId)) {
+        	if (!empty($serviceInstance->service->dependencies)) {
+	        	foreach ($serviceInstance->service->dependencies as $dependentServiceId) {
+        			if (!$startService($dependentServiceId)) {
         				return false;
         			}
 	        	}
@@ -306,14 +382,14 @@ class ApplicationInstance extends \canis\base\Component
         	if (!($serviceInstance = $self->getServiceInstance($serviceId))) {
         		return false;
         	}
-        	if (!empty($serviceInstance->service->links)) {
-	        	foreach ($serviceInstance->service->links as $linkedServiceId) {
-        			if (!$stopService($linkedServiceId)) {
-        				return false;
-        			}
-	        	}
-	        	sleep(5);
-        	}
+        	if (!empty($serviceInstance->service->dependencies)) {
+                foreach ($serviceInstance->service->dependencies as $dependentServiceId) {
+                    if (!$stopService($dependentServiceId)) {
+                        return false;
+                    }
+                }
+                sleep(5);
+            }
         	if (!$serviceInstance->isStarted() || $serviceInstance->stop()) {
         		$stopped[] = $serviceId;
         		$self->statusLog->addInfo('Service \''. $serviceId .'\' has been stopped');
@@ -341,11 +417,17 @@ class ApplicationInstance extends \canis\base\Component
     	}
     	$this->_attributes = $attributes;
     	if ($oldHostname) {
-    		$this->trigger(static::EVENT_HOSTNAME_CHANGE, $oldHostname, $newHostname);
+            //$event = 
+    		//$this->trigger(static::EVENT_HOSTNAME_CHANGE, $oldHostname, $newHostname);
     	}
     }
 
-    public function actions()
+    public function webActions()
+    {
+        return [];
+    }
+
+    public function instanceActions()
     {
     	$self = $this;
     	$actions = [];
@@ -379,29 +461,52 @@ class ApplicationInstance extends \canis\base\Component
 			},
 			'handler' => \canis\appFarm\components\applications\actions\Restart::className()
 		];
-		$actions['start'] = [
-    		'options' => [
-				'icon' => 'fa fa-play',
-				'label' => 'Start'
-			],
-			'available' => function($self) {
-				return in_array($self->realStatus , ['stopped']);
-			},
-			'handler' => \canis\appFarm\components\applications\actions\Start::className()
-		];
+        $actions['start'] = [
+            'options' => [
+                'icon' => 'fa fa-play',
+                'label' => 'Start'
+            ],
+            'available' => function($self) {
+                return in_array($self->realStatus , ['stopped']);
+            },
+            'handler' => \canis\appFarm\components\applications\actions\Start::className()
+        ];
+
+        $actions['backup'] = [
+            'options' => [
+                'icon' => 'fa fa-cloud-download',
+                'label' => 'Backup'
+            ],
+            'available' => function($self) {
+                return $self->canBackup();
+            },
+            'handler' => \canis\appFarm\components\applications\actions\Backup::className()
+        ];
+
+
+        $actions['restore'] = [
+            'options' => [
+                'icon' => 'fa fa-cloud-upload',
+                'label' => 'Restore'
+            ],
+            'available' => function($self) {
+                return $self->canRestore();
+            },
+            'handler' => \canis\appFarm\components\applications\actions\Restore::className()
+        ];
 		return $actions;
     }
 
-    public function getWebActions()
+    public function getInstanceActions()
     {
-    	$actions = array_merge(static::actions(), $this->application->object->actions($this));
+    	$actions = array_merge(static::instanceActions(), $this->application->object->instanceActions($this));
     	$defaultAction = [
     		'available' => function($self) {
     			return true;
     		}
     	];
-    	$webActions = [];
-    	$webActions['view_status_log'] = [
+    	$instanceActions = [];
+    	$instanceActions['view_status_log'] = [
 			'icon' => 'fa fa-exclamation-circle',
 			'label' => 'View Status Log',
 			'url' => Url::to(['/instance/view-status-log', 'id' => $this->model->id]),
@@ -412,11 +517,29 @@ class ApplicationInstance extends \canis\base\Component
 	    	foreach ($actions as $actionId => $action) {
 	    		$action = array_merge($defaultAction, $action);
 	    		if ($action['available']($this)) {
-	    			$webActions[$actionId] = $action['options'];
+	    			$instanceActions[$actionId] = $action['options'];
 	    		}
 	    	}
 	    }
-    	return $webActions;
+    	return $instanceActions;
+    }
+
+    public function getWebActions()
+    {
+        $actions = array_merge(static::webActions(), $this->application->object->webActions($this));
+        $defaultAction = [
+            'available' => function($self) {
+                return true;
+            }
+        ];
+        $webActions = [];
+        foreach ($actions as $actionId => $action) {
+            $action = array_merge($defaultAction, $action);
+            if ($action['available']($this)) {
+                $webActions[$actionId] = $action['options'];
+            }
+        }
+        return $webActions;
     }
 
 	public function getPrimaryHostname()
@@ -467,7 +590,8 @@ class ApplicationInstance extends \canis\base\Component
 		$p['appStatus'] = $this->applicationStatus;
 		$p['prefix'] = $this->prefix;
 		$p['attributes'] = $this->attributes;
-		$p['actions'] = $this->webActions;
+        $p['instanceActions'] = $this->instanceActions;
+        $p['webActions'] = $this->webActions;
 		$p['services'] = false;
 		if (!empty($this->_services)) {
 			$p['services'] = [];
@@ -494,13 +618,13 @@ class ApplicationInstance extends \canis\base\Component
         	$this->_statusLog->lastUpdate = microtime(true);
         	$this->saveCache()->save();
         } else {
-        	$checkLog = Cacher::get([get_called_class(), $this->model->primaryKey, $this->model->created]);
-        	if (!$checkLog) {	
+        	$checkLog = Cacher::get(['ApplicationInstance__StatusLog', $this->model->primaryKey, $this->model->created]);
+        	if (!$checkLog && !isset($this->_statusLog)) {	
 		    	$checkLog = $this->_statusLog = new Status;
 		    	$checkLog->lastUpdate = microtime(true);
 		    	$this->saveCache()->save();
         	}
-        	if ($checkLog->lastUpdate && $this->_statusLog->lastUpdate && $checkLog->lastUpdate > $this->_statusLog->lastUpdate) {
+        	if ($checkLog && $checkLog->lastUpdate && $this->_statusLog->lastUpdate && $checkLog->lastUpdate > $this->_statusLog->lastUpdate) {
         		$this->_statusLog = $checkLog;
         	}
         }
@@ -518,14 +642,101 @@ class ApplicationInstance extends \canis\base\Component
     		return $this;
     	}
         $this->_statusLog->lastUpdate = microtime(true);
-        Cacher::set([get_called_class(), $this->model->primaryKey, $this->model->created], $this->_statusLog, 3600);
+        Cacher::set(['ApplicationInstance__StatusLog', $this->model->primaryKey, $this->model->created], $this->_statusLog, 3600);
         return $this;
     }
+
     public function save()
     {
     	return $this->model->save();
     }
 
+    public function canBackup()
+    {
+        return $this->status === 'ready' && $this->application->object->hasBackupTask();
+    }
 
+    public function canRestore()
+    {
+        return $this->application->object->hasRestoreTask();
+    }
+
+    public function getRestoreTransferPath()
+    {
+        $path = $this->getParentTransferPath() . DIRECTORY_SEPARATOR . 'restore';
+        if (!is_dir($path)) {
+            mkdir($path, 0755);
+        }
+        return $path;
+    }
+
+    public function getParentTransferPath()
+    {
+        return '/var/transfer';
+    }
+
+    public function restore($backup, $status = null, $config = [])
+    {
+        if ($status === null) {
+            $status = $this->statusLog;
+        }
+        $stopAfter = false;
+        if (!$this->canRestore()) {
+            $status->addError("Unable to restore back up: no restore task available");
+            return false;
+        }
+        if ($this->applicationStatus !== 'running') {
+            sleep(5);
+            $tries = 3;
+            $stopAfter = $this->applicationStatus === 'stopped';
+            while ($tries > 0 && $this->applicationStatus !== 'running') {
+                $tries--;
+                $this->start();
+                sleep(5);
+            }
+            if ($this->applicationStatus !== 'running') {
+                $status->addError("Unable to restore back up: couldn't restart services");
+                return false;
+            }
+        }
+        $restoreInstance = tasks\RestoreInstance::setup($this, $backup, $config);
+        $restoreInstanceResult = $restoreInstance->run($status);
+        if ($stopAfter) {
+            $this->stop();
+        }
+        return $restoreInstanceResult;
+    }
+
+    public function backup($status = null, $config = [])
+    {
+        if ($status === null) {
+            $status = $this->statusLog;
+        }
+        $stopAfter = false;
+        if (!$this->canBackup()) {
+            $status->addError("Unable to back up: no backup task available");
+            return false;
+        }
+        if ($this->applicationStatus !== 'running') {
+            sleep(5);
+            $tries = 3;
+            $stopAfter = $this->applicationStatus === 'stopped';
+            while ($tries > 0 && $this->applicationStatus !== 'running') {
+                $tries--;
+                $this->start();
+                sleep(5);
+            }
+            if ($this->applicationStatus !== 'running') {
+                $status->addError("Unable to back up: couldn't restart services");
+                return false;
+            }
+        }
+        $backupInstance = tasks\BackupInstance::setup($this, $config);
+        $backupInstanceResult = $backupInstance->run($status);
+        if ($stopAfter) {
+            $this->stop();
+        }
+        return $backupInstanceResult;
+    }
 }
 ?>

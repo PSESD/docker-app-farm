@@ -9,13 +9,29 @@ $this->beginContent('@canis/appFarm/views/layouts/frame.php');
 NavBar::begin([
     'brandLabel' => Yii::$app->params['siteName'],
     'brandUrl' => ['default/index'],
-    'options' => ['class' => 'navbar-inverse navbar-fixed-top'],
+    'options' => ['class' => 'navbar-default navbar-fixed-top'],
 ]);
-// echo Nav::widget([
-//     'options' => ['class' => 'nav navbar-nav navbar-right'],
-//     'items' => [
-//     ],
-// ]);
+echo Nav::widget([
+    'options' => ['class' => 'nav navbar-nav navbar-left'],
+    'items' => [
+        [
+            'label' => 'Instances' ,
+            'url' => ['/instance/index']
+        ],
+        [
+            'label' => 'Backups' ,
+            'url' => ['/backup/index']
+        ],
+        [
+            'label' => 'Certificates' ,
+            'url' => ['/certificate/index']
+        ],
+        [
+            'label' => 'Applications' ,
+            'url' => ['/application/index']
+        ]
+    ],
+]);
 $userMenu = [];
 $userMenu[] = DeferredNavItem::widget([]);
 if (Yii::$app->user->isGuest) {
