@@ -40,6 +40,7 @@ class InstanceController extends Controller
         if ($backup) {
             $this->params['model']->name = $backup->dataObject->data['applicationInstance']['name'] .' (copy)';
             $this->params['applicationInstance']->attributes = $backup->dataObject->data['applicationInstance']['attributes'];
+            //applicationInstance
             $this->params['applicationInstance']->restoreBackupId = $backup->id;
         }
         if (!empty($_POST)) {
@@ -54,6 +55,11 @@ class InstanceController extends Controller
             if ($this->params['model']->save()) {
                 Yii::$app->response->success = 'Instance of \'' . $application->name .'\' created!';
                 Yii::$app->response->task = 'trigger';
+                if (!empty($_GET['redirect'])) {
+                    if ($_GET['redirect'] === 'instances') {
+                        Yii::$app->response->redirect = ['/instance/index'];
+                    }
+                }
                 Yii::$app->response->trigger = [['refresh', '.instance-manager']];
                 return;
             }

@@ -33,7 +33,8 @@
         "bower-asset/canis-assets-lib": "0.1.*",
         "bower-asset/canis-log-viewer": "0.1.*",
         "bower-asset/canis-expandable": "0.1.*",
-        "stage1/docker-php": "@dev"
+        "stage1/docker-php": "@dev",
+        "aws/aws-sdk-php": "3.3.*"
     },
     "require-dev": {
         "yiisoft/yii2-gii": "2.0.*",

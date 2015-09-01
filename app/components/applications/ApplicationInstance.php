@@ -16,7 +16,6 @@ use canis\caching\Cacher;
 
 class ApplicationInstance extends \canis\base\Component
 {
-	const EVENT_HOSTNAME_CHANGE = '_hostnameChange';
 	public $model;
     public $restoreBackupId = false;
 	public $status = 'uninitialized';
@@ -125,6 +124,7 @@ class ApplicationInstance extends \canis\base\Component
             return true;
         }
         $backup = false;
+        $restoreConfig = [];
         if ($this->restoreBackupId) {
             if (!$this->canRestore()) {       
                 $this->statusLog->addError('No valid restore task for \''. $this->applicationId .'\'');
@@ -190,13 +190,17 @@ class ApplicationInstance extends \canis\base\Component
         $this->statusLog->addInfo('Setting up application');
         foreach ($this->_services as $serviceId => $serviceInstance) {
         	if (!$serviceInstance->service->afterCreate($serviceInstance)) {
+                $this->updateStatus('failed');
         		return false;
         	}
         }
 
         if ($backup) {
-            $this->updateStatus('pre_restore');
-            $this->restore($backup);
+            $this->updateStatus('restoring');
+            if (!$this->restore($backup, null, $restoreConfig)) {
+                $this->updateStatus('failed');
+                return false;
+            }
         }
 
         // verify application
@@ -257,7 +261,7 @@ class ApplicationInstance extends \canis\base\Component
 
     public function getApplicationStatus()
     {
-    	if (!($this->status === 'ready' || $this->status === 'failed')) {
+    	if (!($this->status === 'ready' || $this->status === 'failed' || $this->status === 'restoring')) {
     		return false;
     	}
     	if (empty($this->_services)) {
@@ -416,10 +420,10 @@ class ApplicationInstance extends \canis\base\Component
 			$oldHostname = $this->_attributes['hostname'];
     	}
     	$this->_attributes = $attributes;
-    	if ($oldHostname) {
-            //$event = 
-    		//$this->trigger(static::EVENT_HOSTNAME_CHANGE, $oldHostname, $newHostname);
-    	}
+    	
+        if (!empty($oldHostname)) {
+            $this->triggerHostNameChange($oldHostname, $newHostname);
+        }
     }
 
     public function webActions()
@@ -542,6 +546,21 @@ class ApplicationInstance extends \canis\base\Component
         return $webActions;
     }
 
+    public function triggerHostNameChange($old, $new)
+    {
+        if (!in_array($this->status, ['ready', 'restoring', 'verifying'])) {
+            return false;
+        }
+        if (!$this->application) {
+            return false;
+        }
+        $triggerEvent = new HostChangeEvent();
+        $triggerEvent->applicationInstance = $this;
+        $triggerEvent->oldHostname = $old;
+        $triggerEvent->newHostname = $new;
+        $this->application->object->trigger(Application::EVENT_HOSTNAME_CHANGE, $triggerEvent);
+    }
+
 	public function getPrimaryHostname()
 	{
 		if (empty($this->hostname)) {
@@ -564,7 +583,7 @@ class ApplicationInstance extends \canis\base\Component
 		$oldHostname = $this->hostname;
 		$this->_attributes['hostname'] = $hostname;
 		if (!empty($oldHostname)) {
-			$this->trigger(static::EVENT_HOSTNAME_CHANGE, $oldHostname, $hostname);
+			$this->triggerHostNameChange($oldHostname, $hostname);
 		}
 		return $this;
 	}

@@ -14,6 +14,8 @@ use canis\base\collector\CollectedObjectTrait;
 abstract class Application extends \canis\base\Component implements \canis\base\collector\CollectedObjectInterface
 {
     use CollectedObjectTrait;
+    
+    const EVENT_HOSTNAME_CHANGE = '_hostnameChange';
 
     public function getName()
     {

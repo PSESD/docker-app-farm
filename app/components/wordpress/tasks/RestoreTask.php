@@ -9,6 +9,7 @@
 namespace canis\appFarm\components\wordpress\tasks;
 
 use Yii;
+use yii\helpers\FileHelper;
 use canis\appFarm\components\wordpress\WebService;
 
 class RestoreTask extends \canis\appFarm\components\applications\tasks\CommandRestoreTask
@@ -16,6 +17,12 @@ class RestoreTask extends \canis\appFarm\components\applications\tasks\CommandRe
 	public function commandSettings($restoreInstance)
 	{
 		$c = [];
+		$wpConfigRetrievalPoint = $restoreInstance->generateRetrievalPoint('wp-config.php');
+		$c[] = [
+			'description' => 'Restoring wp-config.php file',
+			'service' => 'web',
+			'cmd' => 'cp ' . $wpConfigRetrievalPoint .' /var/www/web/wp-config.php',
+		];
 		$databaseRetrievalPoint = $restoreInstance->generateRetrievalPoint('database.sql');
 		$c[] = [
 			'description' => 'Restore database',
@@ -23,19 +30,11 @@ class RestoreTask extends \canis\appFarm\components\applications\tasks\CommandRe
 			'cmd' => '/var/www/client/wp db import ' . WebService::generateParams([$databaseRetrievalPoint]),
 		];
 
-		$fileRetrievalPoint = $restoreInstance->generateRetrievalPoint('files.tar');
+		$fileRetrievalPoint = $restoreInstance->generateRetrievalPoint('wp-content.tar');
 		$c[] = [
 			'description' => 'Restoring files',
 			'service' => 'web',
 			'cmd' => 'tar -x -f "'. $fileRetrievalPoint .'" -C /var/www/web'
-		];
-
-
-		$wpConfigRetrievalPoint = $restoreInstance->generateRetrievalPoint('wp-config.php');
-		$c[] = [
-			'description' => 'Restoring wp-config.php file',
-			'service' => 'web',
-			'cmd' => 'cp ' . $wpConfigRetrievalPoint .' /var/www/web/wp-config.php',
 		];
 		return $c;
 	}

@@ -245,7 +245,7 @@ CanisInstance.prototype.update = function(instance) {
 		break;
 		case 'running':
 			this.elements.$status.html('Running');
-			this.setState(false);
+			this.setState('success');
 		break;
 		case 'partially_running':
 			this.elements.$status.html('Partially Running');
@@ -254,7 +254,7 @@ CanisInstance.prototype.update = function(instance) {
 		case 'ready':
 		case 'stopped':
 			this.elements.$status.html('Stopped');
-			this.setState('info');
+			this.setState('warning');
 		break;
 		case 'terminating':
 			this.elements.$status.html('Terminating');
@@ -262,7 +262,7 @@ CanisInstance.prototype.update = function(instance) {
 		break;
 		case 'terminated':
 			this.elements.$status.html('Terminated');
-			this.setState('danger');
+			this.setState('default');
 		break;
 		default:
 			this.elements.$status.html('Unknown status: '+instance.status);

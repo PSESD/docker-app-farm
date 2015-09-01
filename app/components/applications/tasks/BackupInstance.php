@@ -96,6 +96,7 @@ class BackupInstance extends \yii\base\Component
         $package['timestamp'] = time();
         $package['settings'] = $this->settings;
         $package['backupProcessingTime'] = microtime(true) - $this->startTime;
+        $package['farm'] = md5(Yii::$app->params['salt']);
         $package['application'] = [];
         $package['application']['id'] = $applicationInstance->application->applicationObject->primaryKey;
         $package['application']['systemId'] = $applicationInstance->application->systemId;

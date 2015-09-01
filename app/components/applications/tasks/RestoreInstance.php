@@ -9,11 +9,11 @@
 namespace canis\appFarm\components\applications\tasks;
 
 use Yii;
-use yii\helpers\FileHelper;
 use canis\appFarm\models\Backup as BackupModel;
 
 class RestoreInstance extends \yii\base\Component
 {
+    public $startTime;
 	public $applicationId;
 	public $restoreTask;
     public $backupId;
@@ -65,21 +65,22 @@ class RestoreInstance extends \yii\base\Component
             $status->addInfo('Backup file could not be retrieved', ['backupId' => $this->backupId]);
             return false; 
         }
-        $tmp = Yii::$app->fileStorage->getTempFile('tar');
+        $tmp = Yii::$app->fileStorage->getTempFile(false, 'tar');
         $tmpGz = $tmp .'.gz';
         Yii::$app->fileStorage->registerTempFile($tmpGz);
+        Yii::$app->fileStorage->registerTempFile($this->extractPath);
         copy($backupPath, $tmpGz);
         if (filesize($backupPath) !== filesize($tmpGz)) {
             $status->addInfo('Unable to copy backup file', ['backupId' => $this->backupId]);
             return false;
         }
-        $p = new PharData($backupPath);
+        $p = new \PharData($tmpGz);
         $p->decompress();
         if (!file_exists($tmp)) {
             $status->addInfo('Unable to decompress backup file', ['backupId' => $this->backupId]);
             return false;
         }
-        $phar = new PharData($tmp);
+        $phar = new \PharData($tmp);
         if (!$phar->extractTo($this->extractPath, null, true)) {
             return false;
         }
@@ -97,11 +98,14 @@ class RestoreInstance extends \yii\base\Component
             $status->addInfo('Unable to extract backup', ['backupId' => $this->backupId]);
             return false;
         }
-    	if ($this->restoreTask->run($this, $status))) {
+    	if ($this->restoreTask->run($this, $status)) {
     		$status->addInfo('Restore succeeded');
+
+            if ($this->backup->dataObject->data['applicationInstance']['hostname'] !== $this->restoreTask->applicationInstance->primaryHostname) {
+                $this->restoreTask->applicationInstance->triggerHostNameChange($this->backup->dataObject->data['applicationInstance']['hostname'], $this->restoreTask->applicationInstance->primaryHostname);
+            }
             return true;
     	}
-        FileHelper::removeDirectory($this->extractPath);
     	$status->addError('Restore failed');
     	return false;
     }
