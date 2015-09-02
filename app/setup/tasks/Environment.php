@@ -11,8 +11,9 @@ namespace canis\appFarm\setup\tasks;
 use canis\appFarm\models\Group;
 use canis\appFarm\models\Relation;
 
-use Docker\Http\DockerClient;
-use Docker\Docker;
+use Clue\React\Docker\Factory as DockerFactory;
+use Clue\React\Docker\Client as DockerClient;
+use Clue\React\Block;
 /**
  *
  * @author Jacob Morrison <email@ofjacob.com>
@@ -28,25 +29,19 @@ class Environment extends \canis\setup\tasks\Environment
     {
         $transferContainerDefault = 'transfer';
         try {
-            $context = null;
-            if (DOCKER_TLS_VERIFY) {
-                $peername = defined('DOCKER_PEER_NAME') ? DOCKER_PEER_NAME : 'boot2docker';
-                $context = stream_context_create([
-                    'ssl' => [
-                        'cafile' => DOCKER_CA_CERT_PATH,
-                        'local_cert' => DOCKER_CERT_PATH,
-                        'peer_name' => $peername,
-                    ],
-                ]);
+            $loop = \React\EventLoop\Factory::create();
+            $factory = new DockerFactory($loop);
+            $client = $factory->createClient(DOCKER_HOST);
+            $containerPromise = $client->containerList(true);
+            try {
+                $allContainers = Block\await($containerPromise, $loop);
+            } catch (\Exception $e) {
             }
-            $client = new DockerClient([], DOCKER_HOST, $context, DOCKER_TLS_VERIFY);
-            $docker = new Docker($client);
-            $allContainers = $docker->getContainerManager()->findAll(['all' => 1]);
+
             foreach ($allContainers as $container) {
-                if ($container->getImage() && in_array($container->getImage()->getRepository(), ['busybox'])) {
-                    $data = $container->getData();
-                    if (isset($data['Names'][0])) {
-                        $transferContainerDefault = trim($data['Names'][0], '/');
+                if (in_array($container['Image'], ['busybox'])) {
+                    if (isset($container['Names'][0]) && strpos($container['Names'][0], 'transfer')) {
+                        $transferContainerDefault = trim($container['Names'][0], '/');
                     }
                 }
             }

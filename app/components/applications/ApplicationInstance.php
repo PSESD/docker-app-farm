@@ -149,7 +149,10 @@ class ApplicationInstance extends \canis\base\Component
         // set up service objects
         $this->statusLog->addInfo('Initiating service objects');
         foreach ($services as $id => $service) {
-        	$this->_services[$id] = $service->createInstance($id, $this);
+        	if (!$this->_services[$id] = $service->createInstance($id, $this)) {
+                $this->updateStatus('failed');
+                return false;
+            }
             $this->_services[$id]->backupRestorePrep($backup);
         }
 

@@ -6,7 +6,7 @@ if (!file_exists($hostEnvFile)) {
 	$hostIP = trim($hostIP);
 	$envFile = <<< END
 <?php
-defined('DOCKER_HOST')			|| define('DOCKER_HOST', 'tcp://{$hostIP}:2376');
+defined('DOCKER_HOST')			|| define('DOCKER_HOST', 'http://{$hostIP}:2375/');
 
 END;
 	file_put_contents($hostEnvFile, $envFile);

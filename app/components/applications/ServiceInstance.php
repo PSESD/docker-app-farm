@@ -68,15 +68,6 @@ class ServiceInstance extends \canis\base\Component
     	return true;
     }
 
-    public static function getContainerById($containerId)
-    {
-    	$container = Yii::$app->docker->docker->getContainerManager()->find($containerId);
-    	if (empty($container)) {
-    		return false;
-    	}
-    	return $container;
-    }
-
     public function getContainerSettings()
     {
     	$settings = [];
@@ -119,18 +110,25 @@ class ServiceInstance extends \canis\base\Component
     		}
     	}
     	if (($ports = $this->service->ports) && !empty($ports)) {
-    		$portCollection = new PortCollection();
-    		foreach ($ports as $port) {
-    			$portCollection->add(new Port($port));
-    		}
-    		$settings['HostConfig']['PortBindings'] = $portCollection->toSpec();
+    		$settings['HostConfig']['PortBindings'] = [];
+            foreach ($ports as $port) {
+                $portParts = explode(':', $port);
+                $key = $portParts[0] .'/tcp';
+                $settings['HostConfig']['PortBindings'][$key] = [];
+                if (isset($portParts[1])) {
+                    $settings['HostConfig']['PortBindings'][$key][] = ['HostPort' => (string)$portParts[1]];
+                } else {
+                    $settings['HostConfig']['PortBindings'][$key][] = ['HostPort' => ''];
+                }
+            }
     	}
     	if (($expose = $this->service->expose) && !empty($expose)) {
-    		$portCollection = new PortCollection();
-    		foreach ($expose as $port) {
-    			$portCollection->add(new Port($port));
-    		}
-    		$settings['ExposedPorts'] = $portCollection->toExposedPorts();
+    		$settings['ExposedPorts'] = [];
+            foreach ($expose as $port) {
+                $portParts = explode(':', $port);
+                $key = $portParts[0] .'/tcp';
+                $settings['ExposedPorts'][$key] = new \stdClass;
+            }
     	}
     	return $settings;
     }
@@ -147,11 +145,12 @@ class ServiceInstance extends \canis\base\Component
 
     public function getContainer()
     {
+        $self = $this;
     	if ($this->container) {
     		return $this->container;
     	}
     	if ($this->containerId) {
-    		return $this->container = static::getContainerById($this->containerId);
+    		return $this->container = Yii::$app->docker->getContainerById($this->containerId);
     	}
     	if ($this->initializing) {
     		$this->applicationInstance->statusLog->addError('Dependency loop for service \''. $this->serviceId .'\'');
@@ -187,11 +186,17 @@ class ServiceInstance extends \canis\base\Component
 
 		$containerSettings = $this->containerSettings;
 		$this->applicationInstance->statusLog->addInfo('Setting up container for service \''. $this->serviceId .'\'', ['settings' => $containerSettings]);
-		$container = new \Docker\Container($containerSettings);
+        $container = Yii::$app->docker->setupContainer($containerSettings);
 		$container->setName($this->containerName);
 		$this->applicationInstance->statusLog->addInfo('Creating container for service \''. $this->serviceId .'\'');
 		try {
-			Yii::$app->docker->docker->getContainerManager()->create($container);
+			$container->create(function($manager, $response) use ($self) {
+                $self->applicationInstance->statusLog->addInfo('Container for  \''. $self->serviceId .'\' created', ['response' => $response]);
+            },
+            function($manager, $exception, $response) use ($self) {
+                $self->applicationInstance->statusLog->addError('Container for  \''. $self->serviceId .'\' could not be created', ['response' => $response, 'exception' => $exception->__toString()]);
+            }
+            );
 		} catch (\Exception $e) {
 			$this->applicationInstance->statusLog->addError('Unable to create container for \''. $this->serviceId .'\'', ['error' => $e->__toString()]);
 		    return false;
@@ -260,21 +265,14 @@ class ServiceInstance extends \canis\base\Component
         if (!$this->initialized) {
             return false;
         }
-    	try {
-    		if (!($container = $this->getContainer())) {
-    			return false;
-    		}
-    		$container->setRuntimeInformations([]);
-    		Yii::$app->docker->docker->getContainerManager()->inspect($container);
-    		$info = $container->getRuntimeInformations();
-    		if (isset($info['State'])) {
-    			return $info['State'];
-    		}
-    		return false;
-		} catch (\Exception $e) {
-			return false;
-		}
-		return false;
+    	if (!($container = $this->getContainer())) {
+            return false;
+        }
+        $inspectResults = $container->inspect();
+        if (isset($inspectResults['State'])) {
+            return $inspectResults['State'];
+        }
+        return false;
     }
 
     public function containerExists()
@@ -292,6 +290,7 @@ class ServiceInstance extends \canis\base\Component
 
     public function terminate($quietFail = false)
     {
+        $self = $this;
     	if (!$this->containerExists()) {
     		return true;
     	}
@@ -309,8 +308,15 @@ class ServiceInstance extends \canis\base\Component
         }
     	$this->applicationInstance->statusLog->addInfo('Terminating container for service \''. $this->serviceId .'\'');
 		try {
-			Yii::$app->docker->docker->getContainerManager()->remove($this->container, true);
+            $result = $this->container->terminate(function() use ($self) {
+            }, 
+            function($manager, $exception, $response) use ($self, $quietFail) { 
+                if (!$quietFail) {
+                     $self->applicationInstance->statusLog->addError('Unable to terminate container for \''. $self->serviceId .'\'', ['error' => $exception->__toString(), 'response' => $response]);
+                }
+            });
             FileHelper::removeDirectory($this->transferPath);
+            return $result;
 		} catch (\Exception $e) {
             if (!$quietFail) {
 			     $this->applicationInstance->statusLog->addError('Unable to terminate container for \''. $this->serviceId .'\'', ['error' => $e->__toString()]);
@@ -327,7 +333,7 @@ class ServiceInstance extends \canis\base\Component
     	}
     	$this->applicationInstance->statusLog->addInfo('Starting container for service \''. $this->serviceId .'\'');
 		try {
-			Yii::$app->docker->docker->getContainerManager()->start($this->container);
+			$this->container->start();
 			if ($this->isStarted()) {
 				return true;
 			} else {
@@ -347,7 +353,7 @@ class ServiceInstance extends \canis\base\Component
     	}
     	$this->applicationInstance->statusLog->addInfo('Stopping container for service \''. $this->serviceId .'\'');
 		try {
-			Yii::$app->docker->docker->getContainerManager()->stop($this->container);
+            $this->container->stop();
 			if (!$this->isStarted()) {
 				return true;
 			} else {
@@ -384,12 +390,12 @@ class ServiceInstance extends \canis\base\Component
 
         $response = $this->execCommand($command['cmd'], false, $obfuscate);
         if (!$response) {
-            $statusLog->addError('Command FAILED on \''. $this->serviceId .'\': ' . $command['description'] . '', ['command' => $safeCommand]);
+            $statusLog->addError('Command FAILED on \''. $this->serviceId .'\': ' . $command['description'] . '', ['command' => $safeCommand, 'response' => $response]);
             return false;
         }
-        $responseBody = $response->getBody()->__toString();
+        $responseBody = $response;
         $responseTest = $command['test'] !== false && strpos($responseBody, $command['test']) === false;
-        $responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
+        // $responseBody = preg_replace('/[^\x20-\x7E]/','', $responseBody);
         foreach ($obfuscate as $o) {
             $responseBody = str_replace($o, str_repeat('*', strlen($o)), $responseBody);
         }
@@ -404,6 +410,7 @@ class ServiceInstance extends \canis\base\Component
 
     public function execCommand($command, $callback = false, $obfuscate = [])
     {
+        $self = $this;
     	if (!$this->containerExists()) {
     		return false;
     	}
@@ -413,9 +420,11 @@ class ServiceInstance extends \canis\base\Component
         }
     	// $this->applicationInstance->statusLog->addInfo('Running command on \''. $this->serviceId .'\'', ['commands' => $loggedCommand]);
 		try {
-            $command = ['/bin/bash', '-c', $command . " 2>&1 | sed 's/^/ /'"];
-			$execute = Yii::$app->docker->docker->getContainerManager()->exec($this->container, $command);
-			$response = Yii::$app->docker->docker->getContainerManager()->execstart($execute);
+            $command = ['/bin/bash', '-c', $command . ""];
+			$response = $this->container->executeCommand($command, null, function ($manager, $exception, $response) use ($self, $loggedCommand) {
+                $self->applicationInstance->statusLog->addError('Command failed to run (B)', ['error' => $exception->__toString(), 'command' => $loggedCommand, 'response' => $response]);
+            
+            });
 			if ($callback) {
 				$callback($command, $response);
 			}
@@ -425,7 +434,7 @@ class ServiceInstance extends \canis\base\Component
             foreach ($obfuscate as $o) {
                 $error = str_replace($o, str_repeat('*', strlen($o)), $error);
             }
-			// $this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $error, 'command' => $loggedCommand, 'usedCallback' => $callback !== false]);
+			$this->applicationInstance->statusLog->addError('Command failed to run', ['error' => $error, 'command' => $loggedCommand, 'usedCallback' => $callback !== false]);
 		    return false;
 		}
     }
