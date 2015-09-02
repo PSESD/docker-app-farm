@@ -72,9 +72,6 @@ class Manager extends \canis\base\Component
             $response = Block\await($promise, $this->loop);
         } catch (\Exception $e) {
             $response = false;
-			if (!empty($onFail)) {
-				$onFail($this, $e, $response);
-			}
         }
         return $response;
 	}
@@ -115,9 +112,6 @@ class Manager extends \canis\base\Component
 			}
         } catch (\Exception $e) {
             $response = false;
-			if (!empty($onFail)) {
-				$onFail($this, $e, $response);
-			}
         }
         return $response;
 	}

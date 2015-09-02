@@ -1,9 +1,12 @@
 <?php
 use yii\helpers\Html;
 use yii\helpers\Url;
-// $t = Yii::$app->docker->getContainerById('62d6955d9ad7eb69b921bfde20d4d1013b77730898e6689d12fdb4e87283ffea');
-// $command = ['/bin/bash', '-c', 'sleep 11 && echo hi' . ""];
-// \d($t->executeCommand($command));exit;
+
+//\d(Yii::$app->docker->getContainers());
+// $t = Yii::$app->docker->getContainerById('9d6af40ea06b902b46534bd74cf52798d29dc1090dce91dbe798c64fe2455b40');
+// \d($t->inspect()['State']);
+// \d($t->start());
+// exit;
 
 
 $this->title = 'Instance';

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# sudo php /var/www/scripts/cert_init.php
+chown -R www-data /var/transfer
 sudo php /var/www/scripts/docker_host_discover.php
 
 sleep 30

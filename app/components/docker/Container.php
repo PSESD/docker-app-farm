@@ -71,6 +71,17 @@ class Container extends \canis\base\Component
 		return false;
 	}
 
+	public function getIsRunning()
+	{
+		if ($this->getId() === null) {
+			return false;
+		}
+		if (!($inspection = $this->inspect()) || empty($inspection['State']) || empty($inspection['State']['Running'])) {
+			return false;
+		}
+		return true;
+	}
+
 	public function inspect($onSuccess = null, $onError = null)
 	{
 		if ($this->getId() === null) {
@@ -91,8 +102,8 @@ class Container extends \canis\base\Component
 		}
 		$promise = $this->manager->client->containerRemove($this->getId(), true);
 		$response = $this->manager->waitReturn($promise, $onSuccess, $onError);
-		if ($response) {
-			return $response;
+		if ($response !== false) {
+			return true;
 		}
 		return false;
 	}
@@ -102,23 +113,29 @@ class Container extends \canis\base\Component
 		if ($this->getId() === null) {
 			return false;
 		}
+		if ($this->isRunning) {
+			return true;
+		}
 		$promise = $this->manager->client->containerStart($this->getId());
 		$response = $this->manager->waitReturn($promise, $onSuccess, $onError);
-		if ($response) {
-			return $response;
+		if ($response !== false) {
+			return true;
 		}
 		return false;
 	}
 
-	public function stop($onSuccess = null, $onError = null)
+	public function stop($onSuccess = null, $onError = null, $timeout = 10)
 	{
 		if ($this->getId() === null) {
 			return false;
 		}
-		$promise = $this->manager->client->containerStop($this->getId());
+		if (!$this->isRunning) {
+			return true;
+		}
+		$promise = $this->manager->client->containerStop($this->getId(), $timeout);
 		$response = $this->manager->waitReturn($promise, $onSuccess, $onError);
-		if ($response) {
-			return $response;
+		if ($response !== false) {
+			return true;
 		}
 		return false;
 	}
