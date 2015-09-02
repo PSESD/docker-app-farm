@@ -33,9 +33,12 @@ class Environment extends \canis\setup\tasks\Environment
             $factory = new DockerFactory($loop);
             $client = $factory->createClient(DOCKER_HOST);
             $containerPromise = $client->containerList(true);
+            $allContainers = [];
             try {
                 $allContainers = Block\await($containerPromise, $loop);
             } catch (\Exception $e) {
+                throw $e;
+                echo DOCKER_HOST;exit;
             }
 
             foreach ($allContainers as $container) {
