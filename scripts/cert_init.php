@@ -12,7 +12,7 @@ if (file_exists($dockerCert)) {
 	return;
 }
 if (!file_exists($tmpCaFile)) {
-	echo "CA certificate ({$tmpCaFile}) does not exist!\n";
+	// echo "CA certificate ({$tmpCaFile}) does not exist!\n";
 	return;
 }
 if (!is_dir($certDir)) {
