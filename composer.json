@@ -1,6 +1,6 @@
 {
-    "name": "canis/appFarm",
-    "description": "WordPress Docker Farm",
+    "name": "canis/docker-app-farm",
+    "description": "Docker Application Farm, with WordPress built in",
     "keywords": [
         "wordpress",
         "canis",
@@ -20,33 +20,7 @@
         }
     ],
     "require": {
-        "canis/yii2-canis-lib": "*",
-        "canis/yii2-composer": "*",
-        "yiisoft/yii2-bootstrap": "2.0.*",
-        "yiisoft/yii2-redis": "2.0.*",
-        "yiisoft/yii2-jui": "2.0.*",
-        "yiisoft/yii2-authclient": "2.0.*",
-        "yiisoft/yii2-swiftmailer": "2.0.*",
-        "canis/yii2-deferred-action": "*",
-        "canis/yii2-canis-setup": "*",
-        "canis/yii2-notification-engine": "*",
-        "bower-asset/canis-assets-lib": "0.1.*",
-        "bower-asset/canis-log-viewer": "0.1.*",
-        "bower-asset/canis-expandable": "0.1.*",
-        "clue/docker-react": "~0.2.0",
-        "clue/block-react": "~0.3.0",
-        "aws/aws-sdk-php": "3.3.*",
-        "react/promise-timer": "dev-master"
-    },
-    "require-dev": {
-        "yiisoft/yii2-gii": "2.0.*",
-        "yiisoft/yii2-debug": "2.0.*",
-        "canis/yii2-doc-helper": "*"
-    },
-    "autoload": {
-        "psr-4": {
-            "canis\\appFarm\\": "app"
-        }
+        "canis/docker-app-farm-lib": "*"
     },
     "extra": {
         "yii\\composer\\Installer::postCreateProject": {

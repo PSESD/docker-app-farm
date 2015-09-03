@@ -29,7 +29,7 @@ web:
     VIRTUAL_HOST: ~^appFarm\..*
     NGINX_ERROR_LOG_LEVEL: "notice"
     DB_NAME: "appFarm"
-    GITHUB_API_TOKEN: "954e0a378fa288756e9b492989d197c1c93665ca"
+    GITHUB_API_TOKEN: ""
 db:
   restart: always
   image: jacobom/lemp:mysql
