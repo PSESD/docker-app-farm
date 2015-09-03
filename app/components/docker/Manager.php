@@ -78,6 +78,7 @@ class Manager extends \canis\base\Component
 
 	public function waitReturnStream($stream, $promise, $onSuccess = null, $onFail = null, $timeout = null)
 	{
+		$self = $this;
 		$response = false;
 		if ($timeout === null) {
 			$timeout = 10;
@@ -85,6 +86,7 @@ class Manager extends \canis\base\Component
 		try {
 			
 			$promise->then(function($response) use (&$self, &$onSuccess) {
+            	$response = $self->cleanExecutionResponse($response);
 				if ($onSuccess !== null) {
 					$onSuccess($self, $response);
 				}
@@ -105,7 +107,7 @@ class Manager extends \canis\base\Component
 				$response .= trim($data);
 			});
             $result = Block\await($promise, $this->loop);
-			$response = str_replace("\0", "", $response);
+            $response = $this->cleanExecutionResponse($response);
 			$response = trim($response);
 			if (empty($response)) {
 				$response = true;
@@ -116,6 +118,25 @@ class Manager extends \canis\base\Component
         return $response;
 	}
 
+	public function cleanExecutionResponse($response)
+	{
+
+		$response = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $response);
+		$regex = <<<'END'
+/
+  (
+    (?: [\x00-\x7F]                 # single-byte sequences   0xxxxxxx
+    |   [\xC0-\xDF][\x80-\xBF]      # double-byte sequences   110xxxxx 10xxxxxx
+    |   [\xE0-\xEF][\x80-\xBF]{2}   # triple-byte sequences   1110xxxx 10xxxxxx * 2
+    |   [\xF0-\xF7][\x80-\xBF]{3}   # quadruple-byte sequence 11110xxx 10xxxxxx * 3 
+    ){1,100}                        # ...one or more times
+  )
+| .                                 # anything else
+/x
+END;
+		$response = preg_replace($regex, '$1', $response);
+		return $response;
+	}
 	public function getVersion($onSuccess, $onError, $timeout = 5)
 	{
 		return $this->waitReturn($this->client->version(), $onSuccess, $onError, $timeout);

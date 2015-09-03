@@ -3,10 +3,9 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 //\d(Yii::$app->docker->getContainers());
-// $t = Yii::$app->docker->getContainerById('9d6af40ea06b902b46534bd74cf52798d29dc1090dce91dbe798c64fe2455b40');
-// \d($t->inspect()['State']);
-// \d($t->start());
-// exit;
+// $t = Yii::$app->docker->getContainerById('daf58d5cfd127ce55e8214a92a94f35235db4a3627d79b27f2118582269650f2');
+// $response = $t->executeCommand(['/bin/bash', '-c', 'ps aux']);
+// \d($response);
 
 
 $this->title = 'Instance';
