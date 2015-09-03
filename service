@@ -4,8 +4,8 @@ chown -R www-data /var/transfer
 sudo php /var/www/scripts/docker_host_discover.php
 
 sleep 30
-# if [ -e "/var/www/vendor/autoload.php" ]; then
-# 	if [ -e "/var/www/config/env.php" ]; then
-# 		sudo -u www-data php /var/www/bin/yii daemon/run
-# 	fi
-# fi
+if [ -e "/var/www/vendor/autoload.php" ]; then
+	if [ -e "/var/www/config/env.php" ]; then
+		sudo -u www-data php /var/www/bin/yii daemon/run
+	fi
+fi
