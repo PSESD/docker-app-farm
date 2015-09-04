@@ -4,5 +4,6 @@ composer.lock
 /docker-compose.yml
 .DS_Store
 /certs/
+/storage/
 error.log
 .bash_history
