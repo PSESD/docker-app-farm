@@ -29,5 +29,6 @@ if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'docker_host_env.php')) {
 }
 defined('DOCKER_HOST')					|| define('DOCKER_HOST', 'http://192.168.59.103:2375/');
 defined('DOCKER_PEER_NAME') 			|| define('DOCKER_PEER_NAME', 'boot2docker');
-defined('DOCKER_TRANSFER_CONTAINER')	|| define('DOCKER_TRANSFER_CONTAINER', '');
+defined('DOCKER_SELF_CONTAINER')		|| define('DOCKER_SELF_CONTAINER', false);
+defined('DOCKER_TRANSFER_CONTAINER')	|| define('DOCKER_TRANSFER_CONTAINER', false);
 ?>

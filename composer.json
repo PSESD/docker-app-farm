@@ -20,8 +20,15 @@
         }
     ],
     "require": {
-        "canis/docker-app-farm-lib": "*"
+        "canis/docker-app-farm-lib": "*",
+        "psesd/docker-app-farm-psesd": "*"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "https://github.com/PSESD/docker-app-farm-psesd.git"
+        }
+    ],
     "extra": {
         "yii\\composer\\Installer::postCreateProject": {
             "setPermission": [
