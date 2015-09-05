@@ -27,6 +27,10 @@
         {
             "type": "vcs",
             "url":  "https://github.com/PSESD/docker-app-farm-psesd.git"
+        },
+        {
+            "type": "vcs",
+            "url":  "https://github.com/PSESD/wp-psesd.git"
         }
     ],
     "extra": {

@@ -30,10 +30,6 @@ web:
     NGINX_ERROR_LOG_LEVEL: "notice"
     CERT_NAME: "farm_host"
     DB_NAME: "appFarm"
-    CANIS_APP_DATABASE_HOST: "db"
-    CANIS_APP_DATABASE_USERNAME: "root"
-    CANIS_APP_DATABASE_PASSWORD: "root"
-    CANIS_APP_REDIS_HOST: "cache"
     GITHUB_API_TOKEN: ""
 db:
   restart: always
