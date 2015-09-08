@@ -27,6 +27,11 @@
         {
             "type": "vcs",
             "url":  "https://github.com/PSESD/docker-app-farm-psesd.git"
+        },
+        
+        {
+            "type": "vcs",
+            "url":  "https://github.com/jom/php-docker-react.git"
         }
     ],
     "extra": {
