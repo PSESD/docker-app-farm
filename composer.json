@@ -20,8 +20,7 @@
         }
     ],
     "require": {
-        "canis/docker-app-farm-lib": "*",
-        "psesd/docker-app-farm-psesd": "*"
+        "canis/docker-app-farm-lib": "*"
     },
     "require-dev": {
         "yiisoft/yii2-gii": "2.0.*",
@@ -29,11 +28,6 @@
         "canis/yii2-doc-helper": "*"
     },
     "repositories": [
-        {
-            "type": "vcs",
-            "url":  "https://github.com/PSESD/docker-app-farm-psesd.git"
-        },
-        
         {
             "type": "vcs",
             "url":  "https://github.com/jom/php-docker-react.git"
