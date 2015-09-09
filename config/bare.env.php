@@ -33,4 +33,5 @@ defined('DOCKER_PEER_NAME') 			|| define('DOCKER_PEER_NAME', 'boot2docker');
 defined('DOCKER_SELF_CONTAINER')		|| define('DOCKER_SELF_CONTAINER', false);
 defined('DOCKER_TRANSFER_CONTAINER')	|| define('DOCKER_TRANSFER_CONTAINER', false);
 defined('DOCKER_PROXY_CONTAINER')		|| define('DOCKER_PROXY_CONTAINER', false);
+defined('DOCKER_DB_CONTAINER')			|| define('DOCKER_DB_CONTAINER', false);
 ?>
