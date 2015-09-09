@@ -1,6 +1,7 @@
 # The nginx server for serving static files directly, cached contents via the memcached server and php files via the php-fpm server
 proxy:
   image: jwilder/nginx-proxy
+  restart: always
   ports:
     - "80:80"
     - "443:443"
@@ -11,6 +12,7 @@ proxy:
   privileged: true
 web:
   image: jacobom/lemp:web
+  restart: always
   volumes:
     - ./:/var/www
     - /volumes:/volumes
