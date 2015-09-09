@@ -1,3 +1,4 @@
+/.composer/
 composer.lock
 *.sublime-workspace
 /vendor/
