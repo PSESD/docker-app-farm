@@ -7,6 +7,7 @@ proxy:
     - "443:443"
   volumes:
     - "/var/run/docker.sock:/tmp/docker.sock:ro"
+    - "./scripts/my_proxy.conf:/etc/nginx/conf.d/my_proxy.conf:ro"
   volumes_from:
     - certs
   privileged: true
