@@ -7,6 +7,7 @@ defined('CANIS_APP_ID')					|| define('CANIS_APP_ID', 'appFarm');
 defined('CANIS_APP_NAME')				|| define('CANIS_APP_NAME', 'appFarm');
 defined('CANIS_APP_NAMESPACE')			|| define('CANIS_APP_NAMESPACE', 'canis\appFarm');
 
+defined('CANIS_APP_INSTANCE_ID')		|| define('CANIS_APP_INSTANCE_ID', '');
 defined('CANIS_APP_INSTANCE_VERSION')	|| define('CANIS_APP_INSTANCE_VERSION', false);
 defined('CANIS_APP_INSTALL_PATH')		|| define('CANIS_APP_INSTALL_PATH', dirname(__DIR__));
 defined('CANIS_APP_VENDOR_PATH')			|| define('CANIS_APP_VENDOR_PATH', CANIS_APP_INSTALL_PATH . DIRECTORY_SEPARATOR . 'vendor');
@@ -21,9 +22,16 @@ defined('CANIS_APP_DATABASE_PASSWORD')	|| define('CANIS_APP_DATABASE_PASSWORD', 
 defined('CANIS_APP_DATABASE_DBNAME')		|| define('CANIS_APP_DATABASE_DBNAME', 'appFarm');
 
 defined('CANIS_APP_REDIS_HOST')			|| define('CANIS_APP_REDIS_HOST', '');
-defined('CANIS_APP_REDIS_PORT')		|| define('CANIS_APP_REDIS_PORT', 6379);
+defined('CANIS_APP_REDIS_PORT')			|| define('CANIS_APP_REDIS_PORT', 6379);
 defined('CANIS_APP_REDIS_DATABASE')		|| define('CANIS_APP_REDIS_DATABASE', 0);
 
+defined('CANIS_APP_S3_ACCESS_KEY')		|| define('CANIS_APP_S3_ACCESS_KEY', '');
+defined('CANIS_APP_S3_SECRET_KEY')		|| define('CANIS_APP_S3_SECRET_KEY', '');
+defined('CANIS_APP_S3_BUCKET')			|| define('CANIS_APP_S3_BUCKET', '');
+defined('CANIS_APP_S3_REGION')			|| define('CANIS_APP_S3_REGION', '');
+defined('CANIS_APP_S3_ENCRYPT')			|| define('CANIS_APP_S3_ENCRYPT', false);
+defined('CANIS_APP_S3_RRS')				|| define('CANIS_APP_S3_RRS', false);
+defined('CANIS_APP_S3_SERVE_LOCALLY')	|| define('CANIS_APP_S3_SERVE_LOCALLY', false);
 
 if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'docker_host_env.php')) {
 	require __DIR__ . DIRECTORY_SEPARATOR . 'docker_host_env.php';
