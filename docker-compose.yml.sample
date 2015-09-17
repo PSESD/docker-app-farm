@@ -17,7 +17,7 @@ web:
   volumes:
     - ./:/var/www
     - /volumes:/volumes
-    - /var/lib/docker/certs:/var/www/docker_certs
+    - "/var/run/docker.sock:/tmp/docker.sock:ro"
   ports:
     - "80"
   expose:
