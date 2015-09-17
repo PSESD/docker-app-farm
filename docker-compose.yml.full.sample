@@ -17,6 +17,7 @@ web:
   volumes:
     - ./:/var/www
     - /volumes:/volumes
+    - /var/lib/docker/certs:/var/www/docker_certs
   ports:
     - "80"
   expose:
@@ -29,11 +30,11 @@ web:
     - certs
   privileged: true
   environment:
-    VIRTUAL_HOST: ~^farm\..*
+    VIRTUAL_HOST: "$HOST"
     NGINX_ERROR_LOG_LEVEL: "notice"
     CERT_NAME: "farm_host"
     DB_NAME: "appFarm"
-    GITHUB_API_TOKEN: ""
+    GITHUB_API_TOKEN: "$GITHUB_API_TOKEN"
 db:
   restart: always
   image: jacobom/lemp:mysql
