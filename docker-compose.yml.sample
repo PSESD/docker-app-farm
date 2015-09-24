@@ -29,6 +29,7 @@ web:
     - transfer
     - certs
   privileged: true
+  cpu_shares: 512
   environment:
     VIRTUAL_HOST: "$HOST"
     NGINX_ERROR_LOG_LEVEL: "notice"
