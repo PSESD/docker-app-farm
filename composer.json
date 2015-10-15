@@ -50,7 +50,8 @@
         "asset-installer-paths": {
             "npm-asset-library": "vendor/npm",
             "bower-asset-library": "vendor/bower"
-        }
+        },
+        "asset-pattern-skip-version": false
     },
     "scripts": {
         "post-update-cmd": [
