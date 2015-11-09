@@ -42,4 +42,5 @@ defined('DOCKER_SELF_CONTAINER')		|| define('DOCKER_SELF_CONTAINER', false);
 defined('DOCKER_TRANSFER_CONTAINER')	|| define('DOCKER_TRANSFER_CONTAINER', false);
 defined('DOCKER_PROXY_CONTAINER')		|| define('DOCKER_PROXY_CONTAINER', false);
 defined('DOCKER_DB_CONTAINER')			|| define('DOCKER_DB_CONTAINER', false);
+defined('DOCKER_REDIS_CONTAINER')		|| define('DOCKER_REDIS_CONTAINER', false);
 ?>
