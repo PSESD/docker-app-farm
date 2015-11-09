@@ -11,6 +11,10 @@ proxy:
   volumes_from:
     - certs
   privileged: true
+  log_driver: "json-file"
+  log_opt:
+    max-file: "3"
+    max-size: "400m"
 web:
   image: jacobom/lemp:web
   restart: always
@@ -36,6 +40,10 @@ web:
     CERT_NAME: "farm_host"
     DB_NAME: "appFarm"
     GITHUB_API_TOKEN: "$GITHUB_API_TOKEN"
+  log_driver: "json-file"
+  log_opt:
+    max-file: "3"
+    max-size: "400m"
 db:
   restart: always
   image: jacobom/lemp:mysql
@@ -45,6 +53,10 @@ db:
     - "3360"
   environment:
     DB_NAME: "appFarm"
+  log_driver: "json-file"
+  log_opt:
+    max-file: "3"
+    max-size: "400m"
 transfer:
   image: busybox
   volumes:
