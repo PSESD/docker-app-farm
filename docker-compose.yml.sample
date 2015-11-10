@@ -15,6 +15,8 @@ proxy:
   log_opt:
     max-file: "3"
     max-size: "400m"
+  environment:
+    TZ: "America/Los_Angeles"
 web:
   image: jacobom/lemp:web
   restart: always
@@ -35,6 +37,7 @@ web:
   privileged: true
   cpu_shares: 512
   environment:
+    TZ: "America/Los_Angeles"
     VIRTUAL_HOST: "$HOST"
     NGINX_ERROR_LOG_LEVEL: "notice"
     CERT_NAME: "farm_host"
@@ -51,12 +54,19 @@ db:
     - "3360"
   expose:
     - "3360"
+  volumes_from:
+    - dbStorage
   environment:
+    TZ: "America/Los_Angeles"
     DB_NAME: "appFarm"
   log_driver: "json-file"
   log_opt:
     max-file: "3"
     max-size: "400m"
+dbStorage:
+  image: busybox
+  volumes:
+    - "/var/lib/mysql"
 transfer:
   image: busybox
   volumes:
@@ -68,6 +78,8 @@ certs:
 cache:
   restart: always
   image: jacobom/lemp:redis
+  environment:
+    TZ: "America/Los_Angeles"
   ports:
     - "6379"
   expose:
