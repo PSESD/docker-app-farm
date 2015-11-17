@@ -10,7 +10,6 @@
     ],
     "homepage": "http://canis.io",
     "type": "project",
-    "minimum-stability": "dev",
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -21,7 +20,7 @@
     ],
     "require": {
         "canis/docker-app-farm-lib": "1.*",
-        "psesd/docker-app-farm-psesd": "*"
+        "psesd/docker-app-farm-psesd": "1.*"
     },
     "require-dev": {
         "yiisoft/yii2-gii": "2.0.*",
