@@ -18,6 +18,8 @@
             "homepage": "http://canis.io"
         }
     ],
+    "prefer-stable": true,
+    "minimum-stability": "dev",
     "require": {
         "canis/docker-app-farm-lib": "1.*",
         "psesd/docker-app-farm-psesd": "1.*"
