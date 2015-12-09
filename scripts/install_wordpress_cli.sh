@@ -13,7 +13,7 @@ chown www-data -R /var/www
 cd /var/www/client
 
 echo "Downloading wp-cli.phar..."
-if [ -d "/var/www/client/wp-cli.phar" ]; then
+if [ -e "/var/www/client/wp-cli.phar" ]; then
 	rm /var/www/client/wp-cli.phar
 fi
 wget -q https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
