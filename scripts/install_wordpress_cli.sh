@@ -12,19 +12,22 @@ fi
 chown www-data -R /var/www
 cd /var/www/client
 
-echo "Downloading wp-cli.phar..."
 if [ -e "/var/www/client/wp-cli.phar" ]; then
 	rm /var/www/client/wp-cli.phar
 fi
+if [ -e "/var/www/client/wp" ]; then
+	rm /var/www/client/wp
+fi
+
+sleep 2
+
+echo "Downloading wp-cli.phar..."
 wget -q https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 if [ -e "/var/www/client/wp-cli.phar" ]; then
 	chmod +x wp-cli.phar
 fi
 
 echo "Downloading wp (helper)..."
-if [ -e "/var/www/client/wp" ]; then
-	rm /var/www/client/wp
-fi
 wget -q https://raw.githubusercontent.com/canis-io/docker-app-farm/master/scripts/wp
 
 if [ -e "/var/www/client/wp" ]; then
