@@ -13,10 +13,12 @@ chown www-data -R /var/www
 cd /var/www/client
 
 if [ -e "/var/www/client/wp-cli.phar" ]; then
-	rm /var/www/client/wp-cli.phar
+	echo "Deleting old wp-cli.phar..."
+	rm -f /var/www/client/wp-cli.phar
 fi
 if [ -e "/var/www/client/wp" ]; then
-	rm /var/www/client/wp
+	echo "Deleting old wp..."
+	rm -f /var/www/client/wp
 fi
 
 sleep 2
